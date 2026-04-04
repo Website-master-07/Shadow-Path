@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShadowPath</title>
+  <meta name="description" content="Bridge the gap between classroom and career by connecting students with professionals for real-world shadowing, mentorship, and curated learning roadmaps.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="auth.js"></script>
+  <script src="db.js"></script>
+</head>
+<body>
+
+<!-- ========= NAVBAR ========= -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <div class="nav-logo" onclick="goTo('explore')">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      </div>
+      <span>ShadowPath</span>
+    </div>
+
+    <div class="nav-links" id="nav-links">
+      <a class="nav-a" id="nav-explore"     onclick="goTo('explore')">Explore</a>
+      <a class="nav-a" id="nav-professionals" onclick="goTo('professionals')">Professionals</a>
+      <a class="nav-a" id="nav-resources"   onclick="goTo('resources')">Resources</a>
+      <a class="nav-a" id="nav-messaging" onclick="goTo('messaging')">Messages <span id="nav-msg-badge" class="nav-badge hidden">0</span></a>
+      <!-- student only -->
+      <a class="nav-a student-only" id="nav-dashboard" onclick="goTo('dashboard')">Dashboard <span id="nav-dash-badge" class="nav-badge hidden">0</span></a>
+      <!-- pro only -->
+      <a class="nav-a pro-only hidden" id="nav-inbox" onclick="goTo('inbox')">My Inbox <span id="nav-inbox-badge" class="nav-badge hidden">0</span></a>
+      <a class="nav-a pro-only hidden" id="nav-prosignup" onclick="goTo('prosignup')">My Profile</a>
+    </div>
+
+    <div class="nav-right">
+      <div class="mode-toggle" id="mode-toggle" title="Switch role">
+        <span id="mode-label">Student</span>
+        <div class="toggle-switch" onclick="toggleMode()"><div class="toggle-thumb" id="toggle-thumb"></div></div>
+        <span>Pro</span>
+      </div>
+      <!-- User menu -->
+      <div class="user-menu-wrap" id="user-menu-wrap" style="position:relative;display:none">
+        <div class="nav-avatar" id="nav-avatar" onclick="toggleUserMenu()"></div>
+        <div class="user-dropdown" id="user-dropdown" style="display:none">
+          <div class="user-dd-info" id="user-dd-info"></div>
+          <div class="user-dd-divider"></div>
+          <button class="user-dd-item" onclick="goTo('dashboard');closeUserMenu()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard
+          </button>
+          <button class="user-dd-item" onclick="goTo('messaging');closeUserMenu()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Messages
+          </button>
+          <div class="user-dd-divider"></div>
+          <button class="user-dd-item user-dd-signout" onclick="handleSignOut()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sign Out
+          </button>
+        </div>
+      </div>
+      <!-- Sign in button (shown when logged out) -->
+      <button class="btn btn-indigo btn-sm" id="nav-signin-btn" onclick="window.location.href='login.html'" style="display:none">Sign In</button>
+    </div>
+    <button class="hamburger" onclick="toggleMobile()">&#9776;</button>
+  </div>
+  <div class="mobile-nav" id="mobile-nav">
+    <a onclick="goTo('explore');toggleMobile()">Explore</a>
+    <a onclick="goTo('professionals');toggleMobile()">Professionals</a>
+    <a onclick="goTo('resources');toggleMobile()">Resources</a>
+    <a onclick="goTo('messaging');toggleMobile()">Messages <span id="mob-msg-badge" class="nav-badge hidden">0</span></a>
+    <a class="student-only" onclick="goTo('dashboard');toggleMobile()">My Dashboard <span id="mob-dash-badge" class="nav-badge hidden">0</span></a>
+    <a class="pro-only hidden" onclick="goTo('inbox');toggleMobile()">My Inbox <span id="mob-inbox-badge" class="nav-badge hidden">0</span></a>
+    <a class="pro-only hidden" onclick="goTo('prosignup');toggleMobile()">My Profile</a>
+  </div>
+</nav>
+
+<!-- ========= EXPLORE ========= -->
+<div id="page-explore" class="page">
+
+  <!-- Hero -->
+  <div class="hero-banner">
+    <div class="hero-deco hero-deco-1"></div>
+    <div class="hero-deco hero-deco-2"></div>
+    <div class="hero-inner">
+      <div class="hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        DFW Career Exploration Platform
+      </div>
+      <h1>Welcome to ShadowPath</h1>
+      <p class="hero-sub">Connect with DFW professionals, shadow real workplaces, and discover what career is right for you.</p>
+      <div class="hero-btns">
+        <button class="btn btn-white" onclick="goTo('professionals')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Browse Professionals
+        </button>
+        <button class="btn btn-outline-white" onclick="goTo('resources')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          View Resources
+        </button>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat">
+          <div class="hstat-num">20+</div>
+          <div class="hstat-lbl">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            DFW Professionals
+          </div>
+        </div>
+        <div class="hstat-div"></div>
+        <div class="hstat">
+          <div class="hstat-num">12</div>
+          <div class="hstat-lbl">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            Career Fields
+          </div>
+        </div>
+        <div class="hstat-div"></div>
+        <div class="hstat">
+          <div class="hstat-num">50+</div>
+          <div class="hstat-lbl">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Learning Resources
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Career Fields -->
+  <div class="section">
+    <div class="section-header">
+      <h2 class="section-title">Explore by Career Field</h2>
+      <p class="section-sub">Choose a field to discover professionals and resources</p>
+    </div>
+    <div class="fields-grid" id="explore-fields"></div>
+  </div>
+
+  <!-- Pro CTA (only shown if not in pro mode) -->
+  <div class="pro-cta-strip student-only" id="pro-cta-strip">
+    <div class="pro-cta-inner">
+      <div class="pro-cta-text">
+        <h3>Are you a DFW professional?</h3>
+        <p>Mentor the next generation of DFW professionals. Share your expertise, open your workplace, and inspire students.</p>
+      </div>
+      <button class="btn btn-indigo" onclick="goTo('prosignup')">Join as a Professional →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========= PROFESSIONALS ========= -->
+<div id="page-professionals" class="page hidden">
+  <div class="page-wrap">
+    <div class="page-head">
+      <div>
+        <h1>DFW Professionals</h1>
+        <p class="text-muted">Connect with professionals in the Dallas-Fort Worth area open to shadowing.</p>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="search-field">
+        <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="pro-search" class="search-inp" placeholder="Search by name, title, or company..." oninput="filterProfessionals()">
+      </div>
+      <div class="filter-pills">
+        <select id="pro-field-filter" class="filter-sel" onchange="filterProfessionals()">
+          <option value="">All Fields</option>
+        </select>
+        <select id="pro-avail-filter" class="filter-sel" onchange="filterProfessionals()">
+          <option value="">All Availability</option>
+          <option value="available">Available 🟢</option>
+          <option value="limited">Limited 🟡</option>
+          <option value="unavailable">Unavailable 🔴</option>
+        </select>
+        <select id="pro-type-filter" class="filter-sel" onchange="filterProfessionals()">
+          <option value="">Any Type</option>
+          <option value="in-person">In-Person 🏢</option>
+          <option value="virtual">Virtual 💻</option>
+          <option value="both">Both ✅</option>
+        </select>
+        <button class="btn btn-sm btn-ghost" onclick="clearProFilters()">Clear</button>
+      </div>
+    </div>
+
+    <p class="result-count" id="pro-count"></p>
+    <div class="pros-grid" id="pros-grid"></div>
+  </div>
+</div>
+
+<!-- ========= RESOURCES ========= -->
+<div id="page-resources" class="page hidden">
+  <div class="page-wrap">
+    <div class="page-head">
+      <div>
+        <h1>Resource Hub</h1>
+        <p class="text-muted">Videos, articles, courses and guides for every career path.</p>
+      </div>
+    </div>
+
+    <div class="filter-bar" style="flex-wrap:wrap;gap:.75rem">
+      <div class="search-field" style="flex:1;min-width:200px">
+        <svg class="search-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="res-search" class="search-inp" placeholder="Search resources..." oninput="filterResources()">
+      </div>
+      <select id="res-type-filter" class="filter-sel" onchange="filterResources()">
+        <option value="">All Types</option>
+        <option value="Video">Video</option>
+        <option value="Article">Article</option>
+        <option value="Course">Course</option>
+        <option value="Website">Website</option>
+        <option value="Guide">Guide</option>
+        <option value="Day in Life">Day in Life</option>
+      </select>
+      <select id="res-field-filter" class="filter-sel" onchange="filterResources()">
+        <option value="">All Fields</option>
+      </select>
+    </div>
+
+    <p class="result-count" id="res-count"></p>
+    <div class="res-grid" id="res-grid"></div>
+  </div>
+</div>
+
+<!-- ========= MESSAGING ========= -->
+<div id="page-messaging" class="page hidden">
+  <div class="page-wrap">
+    <h1>Messages</h1>
+    <div class="msg-layout">
+      <div class="msg-sidebar">
+        <div class="msg-sb-head">
+          <div class="search-field" style="flex:1">
+            <svg class="search-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="msg-search" class="search-inp" placeholder="Search conversations..." oninput="filterConversations()">
+          </div>
+        </div>
+        <div id="conv-list"></div>
+      </div>
+      <div class="msg-main" id="msg-main">
+        <div class="msg-empty">
+          <div class="empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>No conversations yet</h3>
+          <p>Start a conversation by connecting with a professional on the Professionals page.</p>
+          <button class="btn btn-indigo btn-sm" onclick="goTo('professionals')">Browse Professionals</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========= DASHBOARD ========= -->
+<div id="page-dashboard" class="page hidden">
+  <div class="page-wrap">
+
+    <!-- Onboarding card (shown if no profile) -->
+    <div id="onboarding-card" class="card onboarding-card hidden">
+      <div class="ob-step" id="ob-step-1">
+        <div class="ob-step-icon">👋</div>
+        <h2>Welcome to ShadowPath!</h2>
+        <p class="text-muted">Let's set up your student profile to get personalized recommendations.</p>
+        <div class="form-grid-2">
+          <div class="form-grp">
+            <label class="form-lbl">Your Name *</label>
+            <input type="text" id="ob-name" class="inp" placeholder="e.g. Jordan Smith" maxlength="100">
+          </div>
+          <div class="form-grp">
+            <label class="form-lbl">Grade Level</label>
+            <select id="ob-grade" class="inp">
+              <option value="">Select grade...</option>
+              <option>6th Grade</option><option>7th Grade</option><option>8th Grade</option>
+              <option>9th Grade</option><option>10th Grade</option><option>11th Grade</option><option>12th Grade</option>
+              <option>College Freshman</option><option>College Sophomore</option>
+              <option>College Junior</option><option>College Senior</option>
+            </select>
+          </div>
+          <div class="form-grp">
+            <label class="form-lbl">Location (optional)</label>
+            <input type="text" id="ob-location" class="inp" placeholder="e.g. Dallas, TX">
+          </div>
+          <div class="form-grp">
+            <label class="form-lbl">Your Email *</label>
+            <input type="email" id="ob-email" class="inp" placeholder="you@email.com">
+          </div>
+        </div>
+        <div class="form-grp" style="margin-top:1rem">
+          <label class="form-lbl">What careers interest you?</label>
+          <div class="mini-fields" id="ob-interests"></div>
+        </div>
+        <button class="btn btn-indigo" style="margin-top:1.5rem" onclick="saveStudentProfile()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Dashboard content (shown if profile exists) -->
+    <div id="dash-content" class="hidden">
+      <div class="page-head">
+        <div>
+          <h1>My Dashboard</h1>
+          <p class="text-muted" id="dash-greeting">Welcome back!</p>
+        </div>
+        <button class="btn btn-indigo" onclick="goTo('professionals')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          Find Professionals
+        </button>
+      </div>
+
+      <div class="dash-stats">
+        <div class="stat-card">
+          <div class="stat-icon stat-amber">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.9-.9a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </div>
+          <div><div class="stat-num" id="d-pending">0</div><div class="stat-lbl">Pending Requests</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div><div class="stat-num" id="d-accepted">0</div><div class="stat-lbl">Accepted</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-indigo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div><div class="stat-num" id="d-resources">0</div><div class="stat-lbl">Saved Resources</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon stat-cyan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          </div>
+          <div><div class="stat-num" id="d-fields">0</div><div class="stat-lbl">Career Fields</div></div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-main">
+          <div class="card">
+            <div class="card-head">
+              <h3>Recommended Professionals</h3>
+              <a class="see-all" onclick="goTo('professionals')">View all →</a>
+            </div>
+            <div class="mini-pros" id="d-recommended"></div>
+          </div>
+
+          <div class="card" style="margin-top:1.25rem">
+            <div class="card-head">
+              <h3>Resources for Your Fields</h3>
+              <a class="see-all" onclick="goTo('resources')">Resource hub →</a>
+            </div>
+            <div id="d-resources-list"></div>
+          </div>
+        </div>
+
+        <div class="dash-side">
+          <div class="card">
+            <div class="card-head">
+              <h3>My Requests</h3>
+              <a class="see-all" onclick="goTo('messaging')">View all →</a>
+            </div>
+            <div id="d-requests"></div>
+          </div>
+
+          <div class="card" style="margin-top:1.25rem">
+            <div class="card-head"><h3>Your Interests</h3></div>
+            <div id="d-interests"></div>
+            <button class="btn btn-sm btn-ghost" style="width:100%;margin-top:.75rem" onclick="resetProfile()">Edit Profile</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========= INBOX (Professional) ========= -->
+<div id="page-inbox" class="page hidden">
+  <div class="page-wrap">
+    <div class="page-head">
+      <div>
+        <h1>Your Inbox</h1>
+        <p class="text-muted">When students send you shadow requests, they'll appear here.</p>
+      </div>
+    </div>
+    <div class="inbox-tabs">
+      <button class="inbox-tab active" onclick="setInboxTab('pending', this)">Pending</button>
+      <button class="inbox-tab" onclick="setInboxTab('accepted', this)">Accepted</button>
+      <button class="inbox-tab" onclick="setInboxTab('declined', this)">Declined</button>
+      <button class="inbox-tab" onclick="setInboxTab('all', this)">All</button>
+    </div>
+    <div id="inbox-list"></div>
+  </div>
+</div>
+
+<!-- ========= PRO SIGNUP ========= -->
+<div id="page-prosignup" class="page hidden">
+  <div class="page-wrap">
+    <div class="pro-layout">
+
+      <div class="pro-info">
+        <h1>Join as a Professional</h1>
+        <p>Mentor the next generation of DFW professionals. Share your expertise, open your workplace, and inspire students.</p>
+        <div class="pro-benefit-cards">
+          <div class="pro-ben-card ben-indigo">
+            <div class="ben-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+            </div>
+            <div><b>Impact Students</b><p>Help local DFW students discover career paths that can change their lives.</p></div>
+          </div>
+          <div class="pro-ben-card ben-cyan">
+            <div class="ben-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div><b>Share Experience</b><p>Give back by sharing your professional journey and day-to-day expertise.</p></div>
+          </div>
+          <div class="pro-ben-card ben-green">
+            <div class="ben-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c.552 0 1-.448 1-1V8a1 1 0 0 0-1-1h-1V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v2H3a1 1 0 0 0-1 1v3c0 .552.448 1 1 1"/><rect x="3" y="12" width="18" height="9" rx="1"/></svg>
+            </div>
+            <div><b>You're in Control</b><p>Choose how many students, what format, and your availability at all times.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pro-form-card card">
+        <div id="pro-form-success" class="hidden" style="text-align:center;padding:2rem">
+          <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
+          <h2>Profile Live!</h2>
+          <p class="text-muted" style="margin-top:.5rem">Your profile is published on the Professionals page. Students in the DFW area can now find and request to shadow you.</p>
+          <div style="display:flex;gap:.75rem;justify-content:center;margin-top:1.5rem">
+            <button class="btn btn-ghost" onclick="document.getElementById('pro-form-success').classList.add('hidden');document.getElementById('pro-form-body').classList.remove('hidden')">Edit Profile</button>
+            <button class="btn btn-indigo" onclick="goTo('inbox')">Go to My Inbox</button>
+          </div>
+        </div>
+
+        <div id="pro-form-body">
+          <h2>Personal Information</h2>
+          <div class="form-grid-2">
+            <div class="form-grp">
+              <label class="form-lbl">Full Name *</label>
+              <input type="text" id="pf-name" class="inp" placeholder="Dr. Jane Smith" maxlength="100">
+            </div>
+            <div class="form-grp">
+              <label class="form-lbl">Job Title *</label>
+              <input type="text" id="pf-title" class="inp" placeholder="Senior Software Engineer" maxlength="100">
+            </div>
+            <div class="form-grp">
+              <label class="form-lbl">Company / Organization</label>
+              <input type="text" id="pf-company" class="inp" placeholder="AT&T, UT Southwestern, etc." maxlength="100">
+            </div>
+            <div class="form-grp">
+              <label class="form-lbl">Email</label>
+              <input type="email" id="pf-email" class="inp" placeholder="you@company.com">
+            </div>
+            <div class="form-grp">
+              <label class="form-lbl">Location (City, State)</label>
+              <input type="text" id="pf-location" class="inp" placeholder="Dallas, TX" maxlength="80">
+            </div>
+            <div class="form-grp">
+              <label class="form-lbl">Years of Experience</label>
+              <select id="pf-exp" class="inp">
+                <option value="1-3 years">1-3 years</option>
+                <option value="3-5 years">3-5 years</option>
+                <option value="5-10 years">5-10 years</option>
+                <option value="10-20 years">10-20 years</option>
+                <option value="20+ years">20+ years</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grp" style="margin-top:.25rem">
+            <label class="form-lbl">Short Bio</label>
+            <textarea id="pf-bio" class="inp inp-ta" placeholder="Tell students about your career journey, what you do, and why you want to mentor..." maxlength="600"></textarea>
+          </div>
+
+          <div class="form-divider"></div>
+          <h2>Shadowing Preferences</h2>
+
+          <div class="form-grp">
+            <label class="form-lbl">Career Field *</label>
+            <select id="pf-field" class="inp"><option value="">Select your field...</option></select>
+          </div>
+
+          <div class="form-grp">
+            <label class="form-lbl">Shadowing Type</label>
+            <div class="radio-group">
+              <label class="radio-opt" id="rt-ip"><input type="radio" name="shadow-type" value="in-person"> <span>In-Person 🏢</span></label>
+              <label class="radio-opt" id="rt-virt"><input type="radio" name="shadow-type" value="virtual"> <span>Virtual 💻</span></label>
+              <label class="radio-opt" id="rt-both"><input type="radio" name="shadow-type" value="both"> <span>Both ✅</span></label>
+            </div>
+          </div>
+
+          <div class="form-grp">
+            <label class="form-lbl">Current Availability</label>
+            <div class="radio-group">
+              <label class="radio-opt"><input type="radio" name="avail" value="available"> <span>Available 🟢</span></label>
+              <label class="radio-opt"><input type="radio" name="avail" value="limited"> <span>Limited 🟡</span></label>
+              <label class="radio-opt"><input type="radio" name="avail" value="unavailable"> <span>Unavailable 🔴</span></label>
+            </div>
+          </div>
+
+          <div class="form-grp">
+            <label class="form-lbl">Max Students per Month</label>
+            <select id="pf-max" class="inp">
+              <option value="1">1 student</option>
+              <option value="2" selected>2 students</option>
+              <option value="3">3 students</option>
+              <option value="4-5">4-5 students</option>
+              <option value="5+">5+ students</option>
+            </select>
+          </div>
+
+          <button class="btn btn-indigo btn-full" style="margin-top:1rem" onclick="submitProProfile()">Submit Profile for Review</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========= SHADOW REQUEST MODAL ========= -->
+<div class="modal-overlay" id="req-modal" onclick="closeReqModal(event)">
+  <div class="modal-box" id="req-modal-box">
+    <div class="modal-head">
+      <h2>Schedule a Shadow Day</h2>
+      <button class="modal-close-btn" onclick="closeReqModal(null)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="req-modal-body"></div>
+  </div>
+</div>
+
+<!-- ========= PRO PROFILE MODAL ========= -->
+<div class="modal-overlay" id="profile-modal" onclick="closeProfileModal(event)">
+  <div class="modal-box modal-lg" id="profile-modal-box"></div>
+</div>
+
+<!-- ========= TOAST ========= -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+<script>
+// ── Auth integration for index.html ──
+// Hide the page until Firebase confirms the auth state (prevents flicker/redirect loop)
+document.body.style.visibility = 'hidden';
+
+let _appInitialized = false;
+
+authOnChange(function(user) {
+  if (!user) {
+    // No session — send to login
+    window.location.href = 'login.html';
+    return;
+  }
+
+  // Reveal the page now that we know the user is logged in
+  document.body.style.visibility = '';
+
+  // Only run setup once (onAuthStateChanged can fire multiple times)
+  if (_appInitialized) { updateAuthNav(user); return; }
+  _appInitialized = true;
+
+  // Apply role from signup if set
+  const signupRole = localStorage.getItem('sp_signup_role');
+  if (signupRole) {
+    S.mode = signupRole === 'pro' ? 'pro' : 'student';
+    localStorage.removeItem('sp_signup_role');
+  }
+
+  // Pre-fill student profile from Google account if none exists yet
+  if (!S.student && S.mode !== 'pro') {
+    S.student = { name: user.name, email: user.email, grade:'', location:'', interests:[] };
+    persist();
+  }
+
+  // Start Firestore real-time listeners for this user
+  if (typeof initFirestoreListeners === 'function') {
+    initFirestoreListeners(user.uid, S.mode);
+  }
+
+  updateAuthNav(user);
+  goTo('explore'); // re-render current page now that user is known
+});
+
+function updateAuthNav(user) {
+  const wrap   = document.getElementById('user-menu-wrap');
+  const avatar = document.getElementById('nav-avatar');
+  const signinBtn = document.getElementById('nav-signin-btn');
+  if (!user) {
+    if (wrap) wrap.style.display = 'none';
+    if (signinBtn) signinBtn.style.display = '';
+    return;
+  }
+  if (wrap) wrap.style.display = '';
+  if (signinBtn) signinBtn.style.display = 'none';
+  if (avatar) {
+    avatar.textContent = user.name ? user.name.slice(0,2).toUpperCase() : '??';
+  }
+  const info = document.getElementById('user-dd-info');
+  if (info) {
+    info.innerHTML = `
+      <div style="font-weight:700;font-size:.875rem;margin-bottom:.1rem">${user.name || 'User'}</div>
+      <div style="font-size:.75rem;color:var(--text-muted)">${user.email || ''}</div>
+      <span style="display:inline-block;margin-top:.35rem;font-size:.68rem;font-weight:600;padding:.15rem .5rem;border-radius:9999px;background:${user.role==='pro'?'#D1FAE5':'#EEF2FF'};color:${user.role==='pro'?'#065f46':'#4F46E5'}">${user.role==='pro'?'Professional':'Student'}</span>
+    `;
+  }
+}
+
+function toggleUserMenu() {
+  const dd = document.getElementById('user-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+function closeUserMenu() {
+  document.getElementById('user-dropdown').style.display = 'none';
+}
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('user-menu-wrap');
+  if (wrap && !wrap.contains(e.target)) closeUserMenu();
+});
+
+async function handleSignOut() {
+  closeUserMenu();
+  await authSignOut();
+  // Clear session state
+  localStorage.removeItem('sp_state');
+  window.location.href = 'login.html';
+}
+</script>
+</body>
+</html>
