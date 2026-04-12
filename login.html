@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — ShadowPath</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --indigo:#4F46E5; --indigo-d:#4338CA; --indigo-l:#EEF2FF;
+      --cyan:#06B6D4; --cyan-d:#0891B2;
+      --green:#10B981; --green-l:#D1FAE5;
+      --red:#EF4444; --red-l:#FEE2E2;
+      --amber:#F59E0B; --amber-l:#FEF3C7;
+      --text:#111827; --muted:#6B7280; --light:#9CA3AF;
+      --border:#E5E7EB; --bg:#F5F7FA; --white:#FFFFFF;
+      --shadow:0 4px 6px -1px rgba(0,0,0,.07),0 2px 4px -1px rgba(0,0,0,.05);
+      --shadow-lg:0 20px 25px -5px rgba(0,0,0,.1),0 10px 10px -5px rgba(0,0,0,.04);
+      --r:12px; --r-sm:8px; --r-full:9999px;
+      --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{font-family:var(--font);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased}
+    a{cursor:pointer;color:var(--indigo);text-decoration:none}
+    a:hover{text-decoration:underline}
+    button{font-family:var(--font);cursor:pointer;border:none;outline:none}
+    input{font-family:var(--font)}
+    .hidden{display:none!important}
+
+    /* ── DEMO BANNER ── */
+    .demo-banner{
+      background:var(--amber-l);border-bottom:1px solid #FDE68A;
+      padding:.65rem 1.5rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
+    }
+    .demo-banner-icon{font-size:1.1rem}
+    .demo-banner-text{flex:1;font-size:.82rem;color:#92400e}
+    .demo-banner-text strong{font-weight:700}
+    .demo-steps{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;color:#78350F;background:rgba(255,255,255,.5);padding:.2rem .6rem;border-radius:var(--r-full);cursor:pointer;margin-left:.35rem}
+    .demo-steps:hover{background:rgba(255,255,255,.8)}
+
+    /* ── LAYOUT ── */
+    .page{display:grid;grid-template-columns:1fr 1fr;min-height:100vh}
+    @media(max-width:768px){.page{grid-template-columns:1fr}.left-panel{display:none}}
+
+    /* ── LEFT PANEL ── */
+    .left-panel{
+      background:linear-gradient(145deg,#3730A3 0%,#4F46E5 45%,#0891B2 100%);
+      display:flex;flex-direction:column;justify-content:center;
+      padding:3rem 2.5rem;position:relative;overflow:hidden;
+    }
+    .lp-deco{position:absolute;border-radius:50%;opacity:.12;pointer-events:none}
+    .lp-deco-1{width:350px;height:350px;background:white;top:-100px;right:-80px}
+    .lp-deco-2{width:250px;height:250px;background:var(--cyan);bottom:-60px;left:-60px}
+    .lp-inner{position:relative;z-index:1}
+    .lp-logo{display:flex;align-items:center;gap:.65rem;margin-bottom:3rem}
+    .lp-logo-mark{
+      width:40px;height:40px;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);
+      border-radius:12px;display:flex;align-items:center;justify-content:center;
+      font-weight:800;color:white;font-size:.9rem;backdrop-filter:blur(8px);
+    }
+    .lp-logo-name{font-weight:800;font-size:1.25rem;color:white}
+    .lp-headline{font-size:2rem;font-weight:800;color:white;line-height:1.2;margin-bottom:.75rem}
+    .lp-sub{color:rgba(255,255,255,.8);font-size:.925rem;line-height:1.7;margin-bottom:2.5rem}
+    .lp-benefits{display:flex;flex-direction:column;gap:.85rem}
+    .lp-benefit{display:flex;align-items:flex-start;gap:.75rem}
+    .lp-check{
+      width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.15);
+      display:flex;align-items:center;justify-content:center;
+      color:white;flex-shrink:0;margin-top:.15rem;font-size:.7rem;
+    }
+    .lp-benefit-text{color:rgba(255,255,255,.88);font-size:.875rem;line-height:1.5}
+    .lp-benefit-text b{color:white;display:block}
+    .lp-stats{
+      margin-top:3rem;display:flex;gap:2rem;
+      padding-top:2rem;border-top:1px solid rgba(255,255,255,.15);
+    }
+    .lp-stat-num{font-size:1.4rem;font-weight:800;color:white}
+    .lp-stat-lbl{font-size:.75rem;color:rgba(255,255,255,.65);margin-top:.1rem}
+
+    /* ── RIGHT PANEL ── */
+    .right-panel{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2rem 1.5rem;background:white;overflow-y:auto}
+    .auth-card{width:100%;max-width:420px}
+
+    /* tabs */
+    .auth-tabs{display:flex;background:var(--bg);border-radius:var(--r);padding:.25rem;margin-bottom:1.75rem;gap:.25rem}
+    .auth-tab{flex:1;padding:.55rem;border-radius:var(--r-sm);font-size:.875rem;font-weight:600;color:var(--muted);background:none;cursor:pointer;transition:.2s ease;text-align:center}
+    .auth-tab.active{background:white;color:var(--indigo);box-shadow:var(--shadow)}
+
+    .auth-title{font-size:1.4rem;font-weight:800;margin-bottom:.25rem}
+    .auth-sub{color:var(--muted);font-size:.875rem;margin-bottom:1.5rem}
+
+    /* Google button */
+    .google-btn{
+      width:100%;display:flex;align-items:center;justify-content:center;gap:.75rem;
+      padding:.7rem 1rem;border:1.5px solid var(--border);border-radius:var(--r);
+      background:white;font-size:.9rem;font-weight:600;color:var(--text);
+      cursor:pointer;transition:.2s ease;position:relative;
+    }
+    .google-btn:hover{border-color:#c5c5c5;background:#fafafa;box-shadow:var(--shadow)}
+    .google-btn:active{transform:scale(.99)}
+    .google-logo{width:20px;height:20px;flex-shrink:0}
+
+    /* divider */
+    .divider{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0}
+    .divider-line{flex:1;height:1px;background:var(--border)}
+    .divider-text{font-size:.78rem;color:var(--light);font-weight:500;white-space:nowrap}
+
+    /* form */
+    .form-grp{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.85rem}
+    .form-lbl{font-size:.78rem;font-weight:600;color:#374151}
+    .inp{
+      padding:.65rem .9rem;border:1.5px solid var(--border);
+      border-radius:var(--r-sm);font-size:.875rem;color:var(--text);
+      transition:.2s ease;width:100%;background:white;
+    }
+    .inp:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+    .inp.error{border-color:var(--red)}
+    .inp-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    .inp-pwd-wrap{position:relative}
+    .inp-pwd-wrap .inp{padding-right:2.75rem}
+    .pwd-toggle{position:absolute;right:.85rem;top:50%;transform:translateY(-50%);background:none;color:var(--light);cursor:pointer;font-size:.85rem;padding:.2rem}
+    .pwd-toggle:hover{color:var(--muted)}
+
+    /* role selector */
+    .role-selector{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.85rem}
+    .role-card{
+      border:1.5px solid var(--border);border-radius:var(--r);padding:.9rem .75rem;
+      text-align:center;cursor:pointer;transition:.2s ease;
+    }
+    .role-card:hover{border-color:var(--indigo);background:var(--indigo-l)}
+    .role-card.selected{border-color:var(--indigo);background:var(--indigo-l)}
+    .role-card-emoji{font-size:1.4rem;margin-bottom:.35rem}
+    .role-card-name{font-size:.8rem;font-weight:700;margin-bottom:.15rem}
+    .role-card-desc{font-size:.7rem;color:var(--muted)}
+
+    /* submit */
+    .btn-submit{
+      width:100%;padding:.75rem;border-radius:var(--r);
+      background:var(--indigo);color:white;font-size:.925rem;font-weight:700;
+      cursor:pointer;transition:.2s ease;border:none;margin-top:.25rem;
+      display:flex;align-items:center;justify-content:center;gap:.5rem;
+    }
+    .btn-submit:hover{background:var(--indigo-d);transform:translateY(-1px);box-shadow:0 4px 14px rgba(79,70,229,.35)}
+    .btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none}
+    .spinner{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* error / success */
+    .auth-error{background:var(--red-l);color:#991b1b;padding:.65rem .9rem;border-radius:var(--r-sm);font-size:.82rem;font-weight:500;margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem}
+    .auth-success{background:var(--green-l);color:#065f46;padding:.65rem .9rem;border-radius:var(--r-sm);font-size:.82rem;font-weight:500;margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem}
+
+    /* footer */
+    .auth-footer{text-align:center;margin-top:1.25rem;font-size:.8rem;color:var(--muted)}
+    .auth-footer a{color:var(--indigo);font-weight:600}
+
+    /* forgot password */
+    .forgot-link{font-size:.78rem;color:var(--indigo);font-weight:500;text-align:right;display:block;margin-top:.25rem;cursor:pointer}
+    .forgot-link:hover{text-decoration:underline}
+
+    /* ── TEST MODE ── */
+    .test-mode-wrap{margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1rem;text-align:center}
+    .test-mode-toggle{background:none;border:none;color:var(--light);font-size:.73rem;cursor:pointer;font-family:var(--font);padding:.25rem .5rem;border-radius:4px;transition:.2s}
+    .test-mode-toggle:hover{color:var(--muted);background:var(--bg)}
+    .test-mode-row{display:flex;gap:.5rem;margin-top:.65rem;align-items:center}
+    .test-code-inp{flex:1;padding:.5rem .75rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.875rem;font-family:var(--font);letter-spacing:.15em;text-align:center;transition:.2s;background:white;color:var(--text)}
+    .test-code-inp:focus{outline:none;border-color:var(--indigo);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+    .test-code-inp.error{border-color:var(--red);animation:shake .3s ease}
+    @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+    .btn-test-enter{padding:.5rem .9rem;border-radius:var(--r-sm);background:var(--indigo);color:white;font-size:.8rem;font-weight:600;font-family:var(--font);border:none;cursor:pointer;white-space:nowrap;transition:.2s}
+    .btn-test-enter:hover{background:var(--indigo-d)}
+    .test-role-row{display:flex;gap:.5rem;margin-top:.6rem}
+    .test-role-btn{flex:1;padding:.55rem;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:.78rem;font-weight:600;font-family:var(--font);cursor:pointer;background:white;color:var(--muted);transition:.2s;text-align:center}
+    .test-role-btn:hover,.test-role-btn.selected{border-color:var(--indigo);background:var(--indigo-l);color:var(--indigo)}
+
+    /* ── GOOGLE PICKER (demo) ── */
+    .picker-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;
+      display:flex;align-items:center;justify-content:center;padding:1rem;
+    }
+    .picker-box{
+      background:white;border-radius:var(--r);max-width:380px;width:100%;
+      box-shadow:var(--shadow-lg);overflow:hidden;
+    }
+    .picker-head{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);
+    }
+    .picker-head-title{font-size:.95rem;font-weight:700}
+    .picker-close{background:none;font-size:1.3rem;color:var(--muted);line-height:1;padding:.2rem;cursor:pointer}
+    .picker-accounts{padding:.5rem}
+    .picker-account{
+      display:flex;align-items:center;gap:.9rem;padding:.85rem 1rem;
+      border-radius:var(--r-sm);cursor:pointer;transition:.15s;
+    }
+    .picker-account:hover{background:var(--bg)}
+    .picker-avatar{
+      width:42px;height:42px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      color:white;font-weight:700;font-size:.85rem;flex-shrink:0;
+    }
+    .picker-name{font-size:.9rem;font-weight:600;margin-bottom:.1rem}
+    .picker-email{font-size:.75rem;color:var(--muted)}
+    .picker-role-tag{
+      display:inline-block;font-size:.65rem;font-weight:700;padding:.1rem .45rem;
+      border-radius:var(--r-full);margin-top:.15rem;
+    }
+    .picker-divider{height:1px;background:var(--border);margin:.25rem .5rem}
+    .picker-footer{padding:.75rem 1.25rem 1.25rem;text-align:center;font-size:.78rem;color:var(--muted)}
+
+    /* ── SETUP GUIDE MODAL ── */
+    .setup-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;
+      display:flex;align-items:center;justify-content:center;padding:1rem;
+    }
+    .setup-box{
+      background:white;border-radius:var(--r);max-width:560px;width:100%;
+      max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);
+    }
+    .setup-head{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);
+    }
+    .setup-head h2{font-size:1.1rem;font-weight:800}
+    .setup-close{background:none;font-size:1.5rem;color:var(--muted);cursor:pointer;line-height:1}
+    .setup-body{padding:1.5rem}
+    .setup-intro{color:var(--muted);font-size:.875rem;line-height:1.7;margin-bottom:1.5rem}
+    .setup-step{display:flex;gap:1rem;margin-bottom:1.25rem}
+    .setup-step-num{
+      width:28px;height:28px;border-radius:50%;background:var(--indigo);color:white;
+      font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    .setup-step-content h4{font-size:.9rem;font-weight:700;margin-bottom:.2rem}
+    .setup-step-content p{font-size:.82rem;color:var(--muted);line-height:1.6}
+    .setup-step-content code{
+      display:block;background:#F3F4F6;border:1px solid var(--border);border-radius:6px;
+      padding:.75rem;font-family:monospace;font-size:.78rem;margin-top:.5rem;
+      white-space:pre-wrap;overflow-x:auto;color:#374151;
+    }
+    .setup-note{
+      background:var(--amber-l);border:1px solid #FDE68A;border-radius:var(--r-sm);
+      padding:.9rem;font-size:.82rem;color:#92400e;margin-top:1rem;line-height:1.6;
+    }
+    .setup-substeps{display:flex;flex-direction:column;gap:.5rem;margin-top:.65rem;padding-left:.25rem}
+    .setup-sub{display:flex;align-items:flex-start;gap:.6rem;font-size:.8rem;color:#374151;line-height:1.6}
+    .sub-letter{
+      width:20px;height:20px;border-radius:50%;background:#E5E7EB;
+      color:#374151;font-size:.68rem;font-weight:700;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:.15rem;
+    }
+    .setup-tip{
+      background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--r-sm);
+      padding:.65rem .85rem;font-size:.78rem;color:#1E40AF;margin-top:.75rem;line-height:1.6;
+    }
+    .setup-warning{
+      background:#FFF7ED;border:1px solid #FED7AA;border-radius:var(--r-sm);
+      padding:.75rem .9rem;font-size:.78rem;color:#92400E;margin-top:.75rem;line-height:1.6;
+    }
+    .setup-warning .setup-sub{color:#92400E}
+    .setup-warning .sub-letter{background:#FED7AA;color:#92400E}
+    .setup-step-content p+p{margin-top:.4rem}
+
+    /* ── DARK THEME ── */
+    html[data-theme="dark"] {
+      --text:#E6EDF3; --muted:#8B949E; --light:#6E7681;
+      --border:#30363D; --bg:#0D1117; --white:#161B22;
+      --red-l:#2C0A0A; --amber-l:#2C1F0A; --green-l:#0A2D1E;
+      --indigo-l:#1A1F4E;
+    }
+    html[data-theme="dark"] body{background:var(--bg);color:var(--text)}
+    html[data-theme="dark"] .right-panel{background:var(--white)}
+    html[data-theme="dark"] .auth-tabs{background:var(--border)}
+    html[data-theme="dark"] .auth-tab.active{background:var(--white);color:var(--indigo)}
+    html[data-theme="dark"] .google-btn{background:var(--white);border-color:var(--border);color:var(--text)}
+    html[data-theme="dark"] .google-btn:hover{background:var(--border);border-color:#555}
+    html[data-theme="dark"] .inp{background:var(--border);border-color:#444;color:var(--text)}
+    html[data-theme="dark"] .inp:focus{border-color:var(--indigo);background:var(--bg)}
+    html[data-theme="dark"] .role-card{border-color:var(--border);background:transparent;color:var(--text)}
+    html[data-theme="dark"] .role-card:hover{border-color:var(--indigo);background:var(--indigo-l)}
+    html[data-theme="dark"] .role-card.selected{border-color:var(--indigo);background:var(--indigo-l)}
+    html[data-theme="dark"] .picker-box{background:var(--white);border:1px solid var(--border)}
+    html[data-theme="dark"] .picker-head{border-color:var(--border)}
+    html[data-theme="dark"] .picker-account:hover{background:var(--border)}
+    html[data-theme="dark"] .setup-box{background:var(--white)}
+    html[data-theme="dark"] .setup-head{border-color:var(--border)}
+    html[data-theme="dark"] .setup-close{color:var(--muted)}
+    html[data-theme="dark"] .setup-step-content code{background:#21262D;border-color:var(--border);color:#C9D1D9}
+    html[data-theme="dark"] .demo-banner{background:#2C1F0A;border-color:#5C3D0A}
+    html[data-theme="dark"] .demo-banner-text{color:#FDE68A}
+    html[data-theme="dark"] .test-code-inp{background:var(--border);border-color:#444;color:var(--text)}
+    html[data-theme="dark"] .test-mode-wrap{border-color:var(--border)}
+    html[data-theme="dark"] .test-mode-toggle{color:var(--light)}
+    html[data-theme="dark"] .test-role-btn{border-color:var(--border);background:var(--border);color:var(--muted)}
+    html[data-theme="dark"] .test-role-btn:hover,.test-role-btn.selected{border-color:var(--indigo);background:var(--indigo-l);color:var(--indigo)}
+  </style>
+</head>
+<body>
+
+<!-- ── DEMO MODE BANNER ── -->
+<div class="demo-banner" id="demo-banner">
+  <div class="demo-banner-icon">🔧</div>
+  <div class="demo-banner-text">
+    <strong>Demo Mode</strong> — Google login is simulated. Real authentication requires a free Firebase project.
+    <a class="demo-steps" onclick="showSetup()">How to set up Firebase →</a>
+  </div>
+  <button style="background:none;border:none;cursor:pointer;font-size:1rem;color:#92400e" onclick="document.getElementById('demo-banner').remove()">✕</button>
+</div>
+
+<!-- ── MAIN LAYOUT ── -->
+<div class="page">
+
+  <!-- LEFT: Branding Panel -->
+  <div class="left-panel">
+    <div class="lp-deco lp-deco-1"></div>
+    <div class="lp-deco lp-deco-2"></div>
+    <div class="lp-inner">
+      <div class="lp-logo">
+        <div class="lp-logo-mark">SP</div>
+        <div class="lp-logo-name">ShadowPath</div>
+      </div>
+      <h2 class="lp-headline">Your career journey<br>starts here.</h2>
+      <p class="lp-sub">Connect with DFW professionals, shadow real workplaces, and discover what career is right for you.</p>
+      <div class="lp-benefits">
+        <div class="lp-benefit">
+          <div class="lp-check">✓</div>
+          <div class="lp-benefit-text"><b>Shadow real professionals</b>Request in-person or virtual shadowing from 20+ DFW professionals.</div>
+        </div>
+        <div class="lp-benefit">
+          <div class="lp-check">✓</div>
+          <div class="lp-benefit-text"><b>Explore 12 career fields</b>Videos, guides, courses, and day-in-the-life resources for every path.</div>
+        </div>
+        <div class="lp-benefit">
+          <div class="lp-check">✓</div>
+          <div class="lp-benefit-text"><b>Free for students</b>Completely free to use. No credit card. Just sign up and start exploring.</div>
+        </div>
+      </div>
+      <div class="lp-stats">
+        <div><div class="lp-stat-num">20+</div><div class="lp-stat-lbl">DFW Professionals</div></div>
+        <div><div class="lp-stat-num">12</div><div class="lp-stat-lbl">Career Fields</div></div>
+        <div><div class="lp-stat-num">50+</div><div class="lp-stat-lbl">Resources</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Auth Form -->
+  <div class="right-panel">
+    <div class="auth-card">
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+        <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Create Account</button>
+      </div>
+
+      <!-- Error / Success messages -->
+      <div id="auth-error" class="auth-error hidden"></div>
+      <div id="auth-success" class="auth-success hidden"></div>
+
+      <!-- SIGN IN -->
+      <div id="form-signin">
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-sub">Sign in to your ShadowPath account</p>
+
+        <button class="google-btn" id="google-signin-btn" onclick="handleGoogleSignIn()">
+          <svg class="google-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+
+        <div class="divider"><div class="divider-line"></div><span class="divider-text">or sign in with email</span><div class="divider-line"></div></div>
+
+        <div class="form-grp">
+          <label class="form-lbl" for="si-email">Email address</label>
+          <input type="email" id="si-email" class="inp" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="form-grp">
+          <label class="form-lbl" for="si-password">Password</label>
+          <div class="inp-pwd-wrap">
+            <input type="password" id="si-password" class="inp" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleEmailSignIn()">
+            <button class="pwd-toggle" onclick="togglePwd('si-password', this)" tabindex="-1">👁</button>
+          </div>
+          <a class="forgot-link" onclick="handleForgotPassword()">Forgot password?</a>
+        </div>
+
+        <button class="btn-submit" id="signin-submit" onclick="handleEmailSignIn()">Sign In</button>
+
+        <div class="auth-footer">
+          Don't have an account? <a onclick="switchTab('signup')">Create one free →</a>
+        </div>
+      </div>
+
+      <!-- SIGN UP -->
+      <div id="form-signup" class="hidden">
+        <h1 class="auth-title">Create your account</h1>
+        <p class="auth-sub">Join thousands of DFW students exploring careers</p>
+
+        <button class="google-btn" id="google-signup-btn" onclick="handleGoogleSignIn()">
+          <svg class="google-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Sign up with Google
+        </button>
+
+        <div class="divider"><div class="divider-line"></div><span class="divider-text">or sign up with email</span><div class="divider-line"></div></div>
+
+        <!-- Role selection -->
+        <p class="form-lbl" style="margin-bottom:.5rem">I am a...</p>
+        <div class="role-selector" id="role-selector">
+          <div class="role-card selected" id="role-student" onclick="selectRole('student')">
+            <div class="role-card-emoji">🎓</div>
+            <div class="role-card-name">Student</div>
+            <div class="role-card-desc">Exploring careers & finding professionals to shadow</div>
+          </div>
+          <div class="role-card" id="role-pro" onclick="selectRole('pro')">
+            <div class="role-card-emoji">💼</div>
+            <div class="role-card-name">Professional</div>
+            <div class="role-card-desc">Open to mentoring DFW students in my field</div>
+          </div>
+        </div>
+
+        <div class="inp-row">
+          <div class="form-grp">
+            <label class="form-lbl" for="su-first">First name *</label>
+            <input type="text" id="su-first" class="inp" placeholder="Alex" autocomplete="given-name">
+          </div>
+          <div class="form-grp">
+            <label class="form-lbl" for="su-last">Last name</label>
+            <input type="text" id="su-last" class="inp" placeholder="Johnson" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="form-grp">
+          <label class="form-lbl" for="su-email">Email address *</label>
+          <input type="email" id="su-email" class="inp" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="form-grp">
+          <label class="form-lbl" for="su-password">Password *</label>
+          <div class="inp-pwd-wrap">
+            <input type="password" id="su-password" class="inp" placeholder="At least 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleSignUp()">
+            <button class="pwd-toggle" onclick="togglePwd('su-password', this)" tabindex="-1">👁</button>
+          </div>
+        </div>
+
+        <button class="btn-submit" id="signup-submit" onclick="handleSignUp()">Create Account</button>
+
+        <div class="auth-footer">
+          Already have an account? <a onclick="switchTab('signin')">Sign in →</a>
+        </div>
+      </div>
+
+      <!-- TEST MODE -->
+      <div class="test-mode-wrap">
+        <button class="test-mode-toggle" onclick="toggleTestMode()">🔑 Test mode</button>
+        <div id="test-mode-panel" style="display:none">
+          <div class="test-mode-row">
+            <input type="password" id="test-code-input" class="test-code-inp" placeholder="Enter code" maxlength="4"
+              oninput="this.value=this.value.replace(/\D/g,'')"
+              onkeydown="if(event.key==='Enter')submitTestCode()">
+            <button class="btn-test-enter" onclick="submitTestCode()">Enter</button>
+          </div>
+          <div id="test-role-row" class="test-role-row" style="display:none">
+            <button class="test-role-btn selected" id="tr-student" onclick="selectTestRole('student')">🎓 Student</button>
+            <button class="test-role-btn" id="tr-pro" onclick="selectTestRole('pro')">💼 Professional</button>
+          </div>
+          <p id="test-code-hint" style="font-size:.72rem;color:var(--muted);margin-top:.5rem;text-align:center"></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── DEMO GOOGLE ACCOUNT PICKER ── -->
+<div class="picker-overlay hidden" id="google-picker">
+  <div class="picker-box">
+    <div class="picker-head">
+      <div>
+        <div class="picker-head-title">Choose an account</div>
+        <div style="font-size:.72rem;color:#5f6368;margin-top:.1rem">to continue to ShadowPath</div>
+      </div>
+      <button class="picker-close" onclick="document.getElementById('google-picker').classList.add('hidden')">✕</button>
+    </div>
+    <div class="picker-accounts">
+      <div class="picker-account" onclick="demoPickGoogleAccount('demo-1')">
+        <div class="picker-avatar" style="background:linear-gradient(135deg,#4F46E5,#06B6D4)">AJ</div>
+        <div>
+          <div class="picker-name">Alex Johnson</div>
+          <div class="picker-email">alex.johnson@gmail.com</div>
+          <span class="picker-role-tag" style="background:#EEF2FF;color:#4F46E5">Student</span>
+        </div>
+      </div>
+      <div class="picker-account" onclick="demoPickGoogleAccount('demo-2')">
+        <div class="picker-avatar" style="background:linear-gradient(135deg,#10B981,#06B6D4)">JS</div>
+        <div>
+          <div class="picker-name">Jordan Smith</div>
+          <div class="picker-email">jordan.smith@gmail.com</div>
+          <span class="picker-role-tag" style="background:#EEF2FF;color:#4F46E5">Student</span>
+        </div>
+      </div>
+      <div class="picker-account" onclick="demoPickGoogleAccount('demo-3')">
+        <div class="picker-avatar" style="background:linear-gradient(135deg,#8B5CF6,#EC4899)">TW</div>
+        <div>
+          <div class="picker-name">Taylor Williams</div>
+          <div class="picker-email">taylor.w@gmail.com</div>
+          <span class="picker-role-tag" style="background:#EEF2FF;color:#4F46E5">Student</span>
+        </div>
+      </div>
+      <div class="picker-divider"></div>
+      <div class="picker-account" onclick="demoPickGoogleAccount('demo-pro')">
+        <div class="picker-avatar" style="background:linear-gradient(135deg,#EF4444,#F97316)">ER</div>
+        <div>
+          <div class="picker-name">Dr. Emily Richardson</div>
+          <div class="picker-email">emily.r@gmail.com</div>
+          <span class="picker-role-tag" style="background:#D1FAE5;color:#065f46">Professional</span>
+        </div>
+      </div>
+    </div>
+    <div class="picker-footer">🔧 Demo Mode — no real Google account needed</div>
+  </div>
+</div>
+
+<!-- ── FIREBASE SETUP GUIDE ── -->
+<div class="setup-overlay hidden" id="setup-overlay">
+  <div class="setup-box">
+    <div class="setup-head">
+      <h2>🔥 Set Up Real Google Login (Firebase)</h2>
+      <button class="setup-close" onclick="document.getElementById('setup-overlay').classList.add('hidden')">✕</button>
+    </div>
+    <div class="setup-body">
+      <p class="setup-intro">Follow these 7 steps to enable real Google login on ShadowPath. It's completely free and takes about 10 minutes. No coding required — just copy and paste.</p>
+
+      <!-- STEP 1 -->
+      <div class="setup-step">
+        <div class="setup-step-num">1</div>
+        <div class="setup-step-content">
+          <h4>Create a Firebase Project</h4>
+          <p>Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a>. Sign in with your Google account if prompted.</p>
+          <p style="margin-top:.5rem">Click the big blue <strong>"Add project"</strong> button. Then:</p>
+          <div class="setup-substeps">
+            <div class="setup-sub"><span class="sub-letter">a</span> Type <strong>shadowpath</strong> as the project name and click <strong>Continue</strong></div>
+            <div class="setup-sub"><span class="sub-letter">b</span> On the "Google Analytics" screen — you can leave it enabled or turn it off, doesn't matter — then click <strong>Continue</strong> or <strong>Create project</strong></div>
+            <div class="setup-sub"><span class="sub-letter">c</span> Wait for the spinner to finish, then click <strong>"Continue"</strong> to enter your new project dashboard</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="setup-step">
+        <div class="setup-step-num">2</div>
+        <div class="setup-step-content">
+          <h4>Enable Google &amp; Email Sign-In</h4>
+          <p>In the left sidebar of the Firebase console, look for <strong>Authentication</strong> (it has a person icon). Click it.</p>
+          <div class="setup-substeps">
+            <div class="setup-sub"><span class="sub-letter">a</span> Click the <strong>"Get started"</strong> button if it appears</div>
+            <div class="setup-sub"><span class="sub-letter">b</span> Click the <strong>"Sign-in method"</strong> tab at the top</div>
+            <div class="setup-sub"><span class="sub-letter">c</span> Click <strong>"Google"</strong> in the list → toggle the <strong>"Enable"</strong> switch to on (turns blue) → pick your email as the project support email → click <strong>"Save"</strong></div>
+            <div class="setup-sub"><span class="sub-letter">d</span> Click <strong>"Email/Password"</strong> in the list → toggle the first <strong>"Enable"</strong> switch to on → click <strong>"Save"</strong></div>
+          </div>
+          <div class="setup-tip">✅ You should now see both Google and Email/Password showing as <strong>Enabled</strong> in the list.</div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="setup-step">
+        <div class="setup-step-num">3</div>
+        <div class="setup-step-content">
+          <h4>Register Your Web App &amp; Get the Config</h4>
+          <p>Now you need to tell Firebase that ShadowPath is a web app so it gives you the connection keys.</p>
+          <div class="setup-substeps">
+            <div class="setup-sub"><span class="sub-letter">a</span> Look at the very top-left of the Firebase console. Click the <strong>⚙️ gear icon</strong> right next to "Project Overview" in the left sidebar. Then click <strong>"Project settings"</strong></div>
+            <div class="setup-sub"><span class="sub-letter">b</span> On the Project Settings page, scroll down until you see a section called <strong>"Your apps"</strong>. It might say "No apps yet"</div>
+            <div class="setup-sub"><span class="sub-letter">c</span> Click the <strong>&lt;/&gt;</strong> icon (the web icon — it looks like a pair of angle brackets). If you also see Android and iOS icons, make sure you click the web one specifically</div>
+            <div class="setup-sub"><span class="sub-letter">d</span> In the "App nickname" box type <strong>shadowpath-web</strong> (or anything you like). Do <strong>NOT</strong> check the "Firebase Hosting" checkbox — leave it unchecked. Click <strong>"Register app"</strong></div>
+            <div class="setup-sub"><span class="sub-letter">e</span> Firebase now shows you a code block that starts with <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">const firebaseConfig = {</code>. You need to copy everything inside the curly braces. It will look like the box below — yours will have real values instead of the placeholders</div>
+          </div>
+          <code>const firebaseConfig = {
+  apiKey: "AIzaSyD-abc123xyz...",
+  authDomain: "shadowpath-abc12.firebaseapp.com",
+  projectId: "shadowpath-abc12",
+  storageBucket: "shadowpath-abc12.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abc123def456"
+};</code>
+          <p style="margin-top:.6rem">Select all of that code block and copy it (Ctrl+C on Windows, Cmd+C on Mac). Then click <strong>"Continue to console"</strong> to dismiss the screen.</p>
+          <div class="setup-tip">💡 You can always get back to this config: Project Settings → Your apps → SDK setup and configuration → select "Config"</div>
+        </div>
+      </div>
+
+      <!-- STEP 4 -->
+      <div class="setup-step">
+        <div class="setup-step-num">4</div>
+        <div class="setup-step-content">
+          <h4>Open auth.js and Paste Your Config</h4>
+          <p>Now you need to put that config code into the <strong>auth.js</strong> file inside your shadowpath folder.</p>
+          <div class="setup-substeps">
+            <div class="setup-sub"><span class="sub-letter">a</span> Open your <strong>C:\Users\janme\shadowpath</strong> folder in File Explorer</div>
+            <div class="setup-sub"><span class="sub-letter">b</span> Right-click on <strong>auth.js</strong> → hover over <strong>"Open with"</strong> → choose <strong>Notepad</strong> (or VS Code if you have it)</div>
+            <div class="setup-sub"><span class="sub-letter">c</span> Near the very top of the file, find this block — it starts on about line 16:</div>
+          </div>
+          <code>const FIREBASE_CONFIG = {
+  apiKey:            "REPLACE_WITH_YOUR_API_KEY",
+  authDomain:        "REPLACE_WITH_YOUR_AUTH_DOMAIN",
+  projectId:         "REPLACE_WITH_YOUR_PROJECT_ID",
+  storageBucket:     "REPLACE_WITH_YOUR_STORAGE_BUCKET",
+  messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
+  appId:             "REPLACE_WITH_YOUR_APP_ID",
+};</code>
+          <div class="setup-substeps" style="margin-top:.65rem">
+            <div class="setup-sub"><span class="sub-letter">d</span> Select <strong>everything</strong> from <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">const FIREBASE_CONFIG = {</code> all the way to the closing <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">};</code> and delete it</div>
+            <div class="setup-sub"><span class="sub-letter">e</span> Paste the config you copied from Firebase in its place. Change <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">firebaseConfig</code> to <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">FIREBASE_CONFIG</code> — just the variable name at the start needs to match</div>
+            <div class="setup-sub"><span class="sub-letter">f</span> Save the file: <strong>Ctrl+S</strong></div>
+          </div>
+          <div class="setup-tip">✅ After saving, the line should start with <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">const FIREBASE_CONFIG = {</code> and the values inside should be your real keys — not the REPLACE_WITH_... placeholders.</div>
+        </div>
+      </div>
+
+      <!-- STEP 5 -->
+      <div class="setup-step">
+        <div class="setup-step-num">5</div>
+        <div class="setup-step-content">
+          <h4>Run the Site with VS Code Live Server (Required for Google Login)</h4>
+          <p>Google login will <strong>not work</strong> if you just double-click index.html to open it. You must run it on a local web server. The easiest way is VS Code + Live Server.</p>
+          <div class="setup-substeps">
+            <div class="setup-sub"><span class="sub-letter">a</span> Download <a href="https://code.visualstudio.com" target="_blank">VS Code</a> if you don't have it (free). Install it and open it</div>
+            <div class="setup-sub"><span class="sub-letter">b</span> In VS Code, click the <strong>Extensions icon</strong> in the left sidebar (looks like 4 squares). Search for <strong>"Live Server"</strong> by Ritwick Dey. Click <strong>Install</strong></div>
+            <div class="setup-sub"><span class="sub-letter">c</span> Click <strong>File → Open Folder</strong> and open your <strong>C:\Users\janme\shadowpath</strong> folder</div>
+            <div class="setup-sub"><span class="sub-letter">d</span> Click on <strong>login.html</strong> in the file list to open it. Then look at the very bottom-right corner of VS Code — you'll see a button that says <strong>"Go Live"</strong>. Click it</div>
+            <div class="setup-sub"><span class="sub-letter">e</span> Your browser should automatically open to <strong>http://127.0.0.1:5500/login.html</strong> — this is your site running on a local server ✅</div>
+          </div>
+          <div class="setup-tip">💡 Alternatively, if you have Node.js installed you can open a terminal in the shadowpath folder and run: <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">npx serve .</code> then open http://localhost:3000</div>
+        </div>
+      </div>
+
+      <!-- STEP 6 -->
+      <div class="setup-step">
+        <div class="setup-step-num">6</div>
+        <div class="setup-step-content">
+          <h4>Add localhost to Firebase Authorized Domains</h4>
+          <p>Firebase needs to know your site's address is allowed to use Google login. Since you're running it locally, you need to add <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">localhost</code> and <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">127.0.0.1</code>.</p>
+          <div class="setup-substeps">
+            <div class="setup-sub"><span class="sub-letter">a</span> Go back to the Firebase console → <strong>Authentication</strong> in the left sidebar</div>
+            <div class="setup-sub"><span class="sub-letter">b</span> Click the <strong>"Settings"</strong> tab (next to "Users" and "Sign-in method")</div>
+            <div class="setup-sub"><span class="sub-letter">c</span> Scroll down to <strong>"Authorized domains"</strong>. You'll see <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">localhost</code> might already be listed — if so, you're good! If not, click <strong>"Add domain"</strong> and type <strong>localhost</strong>, then click <strong>Add</strong></div>
+            <div class="setup-sub"><span class="sub-letter">d</span> Also add <strong>127.0.0.1</strong> the same way if it's not already listed</div>
+          </div>
+          <div class="setup-tip">🌐 When you publish your site to the internet (e.g. yoursite.com), you'll need to add that domain here too.</div>
+        </div>
+      </div>
+
+      <!-- STEP 7 -->
+      <div class="setup-step">
+        <div class="setup-step-num">7</div>
+        <div class="setup-step-content">
+          <h4>Test It — You're Done!</h4>
+          <p>Go to your browser where Live Server opened the site (http://127.0.0.1:5500/login.html) and try signing in.</p>
+          <div class="setup-substeps">
+            <div class="setup-sub"><span class="sub-letter">a</span> Click <strong>"Continue with Google"</strong> — a real Google account picker popup should appear from Google. If you only have one Google account it will sign in automatically</div>
+            <div class="setup-sub"><span class="sub-letter">b</span> Or try the <strong>"Create Account"</strong> tab — fill in your name, email, and a password to create a real account with email/password login</div>
+            <div class="setup-sub"><span class="sub-letter">c</span> After signing in, you'll land on the ShadowPath app with your real Google name and profile</div>
+          </div>
+          <div class="setup-tip">✅ The yellow "Demo Mode" banner will be gone once Firebase is configured correctly — that's how you know it's working!</div>
+
+          <div class="setup-warning">
+            <strong>🔴 Common errors and fixes:</strong>
+            <div class="setup-sub" style="margin-top:.5rem"><span class="sub-letter">?</span> <strong>"auth/unauthorized-domain"</strong> → You haven't added localhost to Authorized Domains yet (Step 6)</div>
+            <div class="setup-sub"><span class="sub-letter">?</span> <strong>"auth/invalid-api-key"</strong> → The apiKey in auth.js is still the placeholder or was pasted incorrectly. Re-check Step 4</div>
+            <div class="setup-sub"><span class="sub-letter">?</span> <strong>Popup closes with no error</strong> → Make sure you're opening the site via Live Server (http://...) not as a file (file://...)</div>
+            <div class="setup-sub"><span class="sub-letter">?</span> <strong>Google button does nothing</strong> → Check the browser console (F12 → Console) for the exact error message</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-note">
+        🚀 <strong>Want to put ShadowPath online?</strong> You can host it for free on <a href="https://firebase.google.com/docs/hosting" target="_blank">Firebase Hosting</a> — run <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">npm install -g firebase-tools</code> then <code style="font-size:.75rem;background:#f3f4f6;padding:.1rem .3rem;border-radius:4px">firebase deploy</code>. Or drag the shadowpath folder into <a href="https://netlify.com" target="_blank">Netlify</a> for instant free hosting.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK (loaded but only used when configured) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="auth.js"></script>
+<script>
+  // ─── Hide demo banner if Firebase is configured ───
+  if (typeof FIREBASE_READY !== 'undefined' && FIREBASE_READY) {
+    document.getElementById('demo-banner')?.remove();
+  }
+
+  // ─── Tab switching ───
+  let activeTab = 'signin';
+  function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
+    document.getElementById('tab-signup').classList.toggle('active', tab === 'signup');
+    document.getElementById('form-signin').classList.toggle('hidden', tab !== 'signin');
+    document.getElementById('form-signup').classList.toggle('hidden', tab !== 'signup');
+    clearMsg();
+  }
+
+  // ─── Role selection ───
+  let selectedRole = 'student';
+  function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('role-student').classList.toggle('selected', role === 'student');
+    document.getElementById('role-pro').classList.toggle('selected', role === 'pro');
+  }
+
+  // ─── Password visibility ───
+  function togglePwd(id, btn) {
+    const inp = document.getElementById(id);
+    if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+    else                         { inp.type = 'password'; btn.textContent = '👁'; }
+  }
+
+  // ─── Messages ───
+  function showError(msg) {
+    const el = document.getElementById('auth-error');
+    el.innerHTML = '⚠️ ' + msg;
+    el.classList.remove('hidden');
+    document.getElementById('auth-success').classList.add('hidden');
+  }
+  function showSuccess(msg) {
+    const el = document.getElementById('auth-success');
+    el.innerHTML = '✅ ' + msg;
+    el.classList.remove('hidden');
+    document.getElementById('auth-error').classList.add('hidden');
+  }
+  function clearMsg() {
+    document.getElementById('auth-error').classList.add('hidden');
+    document.getElementById('auth-success').classList.add('hidden');
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.innerHTML = loading
+      ? '<div class="spinner"></div> Please wait...'
+      : (btnId === 'signin-submit' ? 'Sign In' : 'Create Account');
+  }
+
+  // ─── Google Sign In ───
+  async function handleGoogleSignIn() {
+    clearMsg();
+    try {
+      const user = await authSignInWithGoogle();
+      if (user) onSignedIn(user);
+    } catch(e) {
+      showError(e.message || 'Google sign-in failed. Try again.');
+    }
+  }
+
+  // ─── Email Sign In ───
+  async function handleEmailSignIn() {
+    clearMsg();
+    const email    = document.getElementById('si-email').value.trim();
+    const password = document.getElementById('si-password').value;
+    if (!email)    { showError('Please enter your email.'); return; }
+    if (!password) { showError('Please enter your password.'); return; }
+    setLoading('signin-submit', true);
+    try {
+      const user = await authSignInWithEmail(email, password);
+      onSignedIn(user);
+    } catch(e) {
+      showError(e.message || 'Incorrect email or password.');
+    } finally { setLoading('signin-submit', false); }
+  }
+
+  // ─── Create Account ───
+  async function handleSignUp() {
+    clearMsg();
+    const first    = document.getElementById('su-first').value.trim();
+    const last     = document.getElementById('su-last').value.trim();
+    const email    = document.getElementById('su-email').value.trim();
+    const password = document.getElementById('su-password').value;
+    if (!first)          { showError('Please enter your first name.'); return; }
+    if (!email)          { showError('Please enter your email address.'); return; }
+    if (password.length < 6) { showError('Password must be at least 6 characters.'); return; }
+    const name = first + (last ? ' ' + last : '');
+    setLoading('signup-submit', true);
+    try {
+      const user = await authCreateAccount(name, email, password, selectedRole);
+      onSignedIn(user);
+    } catch(e) {
+      showError(e.message || 'Could not create account. Try again.');
+    } finally { setLoading('signup-submit', false); }
+  }
+
+  // ─── Forgot Password ───
+  async function handleForgotPassword() {
+    const email = document.getElementById('si-email').value.trim();
+    if (!email) { showError('Enter your email address above, then click Forgot Password.'); return; }
+    if (FIREBASE_READY && typeof firebase !== 'undefined') {
+      try {
+        await firebase.auth().sendPasswordResetEmail(email);
+        showSuccess('Password reset email sent! Check your inbox.');
+      } catch(e) { showError(e.message); }
+    } else {
+      showSuccess('Demo Mode: Password reset emails are sent in Firebase mode.');
+    }
+  }
+
+  // ─── On signed in → go to app ───
+  function onSignedIn(user) {
+    // Store role preference from signup
+    if (activeTab === 'signup') {
+      try { localStorage.setItem('sp_signup_role', selectedRole); } catch(e) {}
+    }
+    // Store user for app.js to pick up
+    try { localStorage.setItem('sp_auth_user', JSON.stringify(user)); } catch(e) {}
+    window.location.href = 'index.html';
+  }
+
+  // ─── Demo Google picker resolved ───
+  // (Override global so picker calls onSignedIn)
+  const _originalPickFn = demoPickGoogleAccount;
+  window.demoPickGoogleAccount = function(uid) {
+    _originalPickFn(uid);
+    const user = authGetCurrentUser();
+    if (user) onSignedIn(user);
+  };
+
+  // ─── Setup guide ───
+  function showSetup() {
+    document.getElementById('setup-overlay').classList.remove('hidden');
+  }
+  document.getElementById('setup-overlay').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.add('hidden');
+  });
+
+  // ─── If already logged in, skip login page ───
+  const existing = authGetCurrentUser();
+  if (existing) window.location.href = 'index.html';
+
+  // ─── Apply saved theme ───
+  (function() {
+    const t = localStorage.getItem('sp_theme') || 'system';
+    const dark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+  })();
+
+  // ─── TEST MODE ───
+  const TEST_CODE = '6769';
+  let _testRole = 'student';
+
+  function toggleTestMode() {
+    const panel = document.getElementById('test-mode-panel');
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (!isOpen) document.getElementById('test-code-input').focus();
+  }
+
+  function selectTestRole(role) {
+    _testRole = role;
+    document.getElementById('tr-student').classList.toggle('selected', role === 'student');
+    document.getElementById('tr-pro').classList.toggle('selected', role === 'pro');
+  }
+
+  function submitTestCode() {
+    const inp = document.getElementById('test-code-input');
+    const code = inp.value.trim();
+    const hint = document.getElementById('test-code-hint');
+    const roleRow = document.getElementById('test-role-row');
+
+    if (code !== TEST_CODE) {
+      inp.classList.add('error');
+      hint.textContent = 'Incorrect code.';
+      hint.style.color = 'var(--red)';
+      setTimeout(() => inp.classList.remove('error'), 400);
+      return;
+    }
+
+    // Code correct — show role selector if not already shown
+    if (roleRow.style.display === 'none') {
+      roleRow.style.display = 'flex';
+      hint.textContent = 'Choose your role and click Enter again.';
+      hint.style.color = 'var(--muted)';
+      inp.style.display = 'none';
+      document.querySelector('.btn-test-enter').textContent = 'Go →';
+      return;
+    }
+
+    // Role selected — log in as test user
+    enterTestMode(_testRole);
+  }
+
+  function enterTestMode(role) {
+    const DEMO_ACCOUNTS = {
+      student: { uid:'test-student-6769', name:'Test Student', email:'test.student@shadowpath.dev', role:'student', photoURL:'' },
+      pro:     { uid:'test-pro-6769',     name:'Test Pro', email:'test.pro@shadowpath.dev', role:'pro', photoURL:'' },
+    };
+    const user = DEMO_ACCOUNTS[role] || DEMO_ACCOUNTS.student;
+    if (role === 'pro') {
+      try { localStorage.setItem('sp_signup_role', 'pro'); } catch(e) {}
+    }
+    authSetDemoUser(user);   // saves to sp_auth_user + sets _testMode flag
+    onSignedIn(user);        // redirects to index.html
+  }
+</script>
+</body>
+</html>
