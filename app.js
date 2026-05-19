@@ -222,6 +222,13 @@ function initFirestoreListeners(uid, role) {
 let currentPage = 'explore';
 
 function goTo(page) {
+  // Auth gate — only explore is public, everything else requires sign-in
+  if (page !== 'explore' && typeof _authedUser !== 'undefined' && !_authedUser) {
+    toast('Sign in to access this page.');
+    window.location.href = 'login.html';
+    return;
+  }
+
   // Clean up per-conversation messages listener when leaving messaging
   if (page !== 'messaging') cleanupListener('messages');
   // Clean up explore-specific observers (not stars — they run globally)
@@ -255,10 +262,16 @@ function updateNav(active) {
   const map = { explore:'nav-explore', professionals:'nav-professionals', resources:'nav-resources', messaging:'nav-messaging', dashboard:'nav-dashboard', inbox:'nav-inbox', prosignup:'nav-prosignup' };
   if (map[active]) document.getElementById(map[active])?.classList.add('active');
 
-  // Mode-based visibility
-  const isPro = S.mode === 'pro';
-  document.querySelectorAll('.student-only').forEach(el => isPro ? el.classList.add('hidden') : el.classList.remove('hidden'));
-  document.querySelectorAll('.pro-only').forEach(el => isPro ? el.classList.remove('hidden') : el.classList.add('hidden'));
+  // Hide all auth-only nav links when logged out
+  const loggedIn = typeof _authedUser !== 'undefined' && !!_authedUser;
+  document.querySelectorAll('.auth-only').forEach(el => {
+    el.classList.toggle('hidden', !loggedIn);
+  });
+
+  // Mode-based visibility (only matters when logged in)
+  const isPro = loggedIn && S.mode === 'pro';
+  document.querySelectorAll('.student-only').forEach(el => (!loggedIn || isPro) ? el.classList.add('hidden') : el.classList.remove('hidden'));
+  document.querySelectorAll('.pro-only').forEach(el => (!loggedIn || !isPro) ? el.classList.add('hidden') : el.classList.remove('hidden'));
 
   // Avatar
   const avatar = document.getElementById('nav-avatar');

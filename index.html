@@ -35,14 +35,14 @@
 
     <div class="nav-links" id="nav-links">
       <a class="nav-a" id="nav-explore"     onclick="goTo('explore')">Explore</a>
-      <a class="nav-a" id="nav-professionals" onclick="goTo('professionals')">Professionals</a>
-      <a class="nav-a" id="nav-resources"   onclick="goTo('resources')">Resources</a>
-      <a class="nav-a" id="nav-messaging" onclick="goTo('messaging')">Messages <span id="nav-msg-badge" class="nav-badge hidden">0</span></a>
+      <a class="nav-a auth-only hidden" id="nav-professionals" onclick="goTo('professionals')">Professionals</a>
+      <a class="nav-a auth-only hidden" id="nav-resources"   onclick="goTo('resources')">Resources</a>
+      <a class="nav-a auth-only hidden" id="nav-messaging" onclick="goTo('messaging')">Messages <span id="nav-msg-badge" class="nav-badge hidden">0</span></a>
       <!-- student only -->
-      <a class="nav-a student-only" id="nav-dashboard" onclick="goTo('dashboard')">Dashboard <span id="nav-dash-badge" class="nav-badge hidden">0</span></a>
+      <a class="nav-a student-only auth-only hidden" id="nav-dashboard" onclick="goTo('dashboard')">Dashboard <span id="nav-dash-badge" class="nav-badge hidden">0</span></a>
       <!-- pro only -->
-      <a class="nav-a pro-only hidden" id="nav-inbox" onclick="goTo('inbox')">My Inbox <span id="nav-inbox-badge" class="nav-badge hidden">0</span></a>
-      <a class="nav-a pro-only hidden" id="nav-prosignup" onclick="goTo('prosignup')">My Profile</a>
+      <a class="nav-a pro-only auth-only hidden" id="nav-inbox" onclick="goTo('inbox')">My Inbox <span id="nav-inbox-badge" class="nav-badge hidden">0</span></a>
+      <a class="nav-a pro-only auth-only hidden" id="nav-prosignup" onclick="goTo('prosignup')">My Profile</a>
     </div>
 
     <div class="nav-right">
@@ -79,12 +79,12 @@
   </div>
   <div class="mobile-nav" id="mobile-nav">
     <a onclick="goTo('explore');toggleMobile()">Explore</a>
-    <a onclick="goTo('professionals');toggleMobile()">Professionals</a>
-    <a onclick="goTo('resources');toggleMobile()">Resources</a>
-    <a onclick="goTo('messaging');toggleMobile()">Messages <span id="mob-msg-badge" class="nav-badge hidden">0</span></a>
-    <a class="student-only" onclick="goTo('dashboard');toggleMobile()">My Dashboard <span id="mob-dash-badge" class="nav-badge hidden">0</span></a>
-    <a class="pro-only hidden" onclick="goTo('inbox');toggleMobile()">My Inbox <span id="mob-inbox-badge" class="nav-badge hidden">0</span></a>
-    <a class="pro-only hidden" onclick="goTo('prosignup');toggleMobile()">My Profile</a>
+    <a class="auth-only hidden" onclick="goTo('professionals');toggleMobile()">Professionals</a>
+    <a class="auth-only hidden" onclick="goTo('resources');toggleMobile()">Resources</a>
+    <a class="auth-only hidden" onclick="goTo('messaging');toggleMobile()">Messages <span id="mob-msg-badge" class="nav-badge hidden">0</span></a>
+    <a class="student-only auth-only hidden" onclick="goTo('dashboard');toggleMobile()">My Dashboard <span id="mob-dash-badge" class="nav-badge hidden">0</span></a>
+    <a class="pro-only auth-only hidden" onclick="goTo('inbox');toggleMobile()">My Inbox <span id="mob-inbox-badge" class="nav-badge hidden">0</span></a>
+    <a class="pro-only auth-only hidden" onclick="goTo('prosignup');toggleMobile()">My Profile</a>
   </div>
 </nav>
 
@@ -775,18 +775,25 @@
 <script src="app.js"></script>
 <script>
 // ── Auth integration for index.html ──
-// Hide the page until Firebase confirms the auth state (prevents flicker/redirect loop)
-document.body.style.visibility = 'hidden';
+// Explore page is public; all other pages require sign-in.
 
 let _appInitialized = false;
+let _authedUser = null;
+
+// Show explore immediately (no auth gate)
+document.body.style.visibility = '';
+updateAuthNav(null);
 
 authOnChange(function(user) {
+  _authedUser = user;
+
   if (!user) {
-    window.location.href = 'login.html';
+    // Logged out — show explore, hide auth-only nav, show sign-in btn
+    updateAuthNav(null);
+    // If on a protected page, kick back to explore
+    if (currentPage !== 'explore') goTo('explore');
     return;
   }
-
-  document.body.style.visibility = '';
 
   if (_appInitialized) { updateAuthNav(user); return; }
   _appInitialized = true;
@@ -907,7 +914,10 @@ async function handleSignOut() {
   await authSignOut();
   // Clear session state
   localStorage.removeItem('sp_state');
-  window.location.href = 'login.html';
+  _authedUser = null;
+  _appInitialized = false;
+  updateAuthNav(null);
+  goTo('explore');
 }
 </script>
 </body>
