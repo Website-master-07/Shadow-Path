@@ -1233,10 +1233,8 @@ function psNextStep() {
       const name  = document.getElementById('pf-name')?.value.trim();
       const title = document.getElementById('pf-title')?.value.trim();
       const field = document.getElementById('pf-field')?.value;
-      const linkedin = document.getElementById('pf-linkedin')?.value.trim();
       if (!name || !title) { toast('Please enter your name and job title.'); return; }
       if (!field) { toast('Please select your career field.'); return; }
-      if (!linkedin) { toast('Please enter your LinkedIn profile URL.'); return; }
     }
     psGoToStep(3);
   }
@@ -1255,6 +1253,8 @@ function psBuildReview() {
     const email = document.getElementById('ps-email')?.value.trim() || '';
     const school = document.getElementById('ps-school')?.value.trim() || '';
     const grade = document.getElementById('ps-grade')?.value || '';
+    const location = document.getElementById('ps-location')?.value.trim() || '';
+    const goal = document.getElementById('ps-goal')?.value.trim() || '';
     const interests = [...document.querySelectorAll('#ps-interests .ps-chip.selected')].map(c => c.textContent.trim());
 
     rows = `
@@ -1263,6 +1263,8 @@ function psBuildReview() {
       <div class="ps-review-row"><span class="ps-review-lbl">EMAIL</span><span class="ps-review-val">${esc(email)}</span></div>
       <div class="ps-review-row"><span class="ps-review-lbl">SCHOOL</span><span class="ps-review-val">${esc(school)}</span></div>
       <div class="ps-review-row"><span class="ps-review-lbl">GRADE</span><span class="ps-review-val">${esc(grade)}</span></div>
+      ${location ? `<div class="ps-review-row"><span class="ps-review-lbl">LOCATION</span><span class="ps-review-val">${esc(location)}</span></div>` : ''}
+      ${goal ? `<div class="ps-review-row"><span class="ps-review-lbl">GOAL</span><span class="ps-review-val">${esc(goal)}</span></div>` : ''}
       ${interests.length ? `<div class="ps-review-row"><span class="ps-review-lbl">INTERESTS</span><span class="ps-review-val">${interests.map(i => esc(i)).join(', ')}</span></div>` : ''}
     `;
   } else {
@@ -1319,6 +1321,8 @@ function _psSubmitStudent() {
   const email = document.getElementById('ps-email')?.value.trim() || '';
   const school = document.getElementById('ps-school')?.value.trim() || '';
   const grade = document.getElementById('ps-grade')?.value || '';
+  const location = document.getElementById('ps-location')?.value.trim() || '';
+  const goal = document.getElementById('ps-goal')?.value.trim() || '';
   const interests = [...document.querySelectorAll('#ps-interests .ps-chip.selected')].map(c => c.dataset.id);
 
   S.student = {
@@ -1326,7 +1330,8 @@ function _psSubmitStudent() {
     email,
     school,
     grade,
-    location: '',
+    location,
+    goal,
     interests,
   };
   S.mode = 'student';
