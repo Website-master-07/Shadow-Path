@@ -224,6 +224,8 @@ let currentPage = 'explore';
 function goTo(page) {
   // Clean up per-conversation messages listener when leaving messaging
   if (page !== 'messaging') cleanupListener('messages');
+  // Clean up explore-specific observers (not stars — they run globally)
+  if (page !== 'explore' && typeof txCleanupObservers === 'function') txCleanupObservers();
 
   document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
   const el = document.getElementById('page-' + page);
@@ -278,16 +280,13 @@ function toggleMobile() {
 function toggleMode() {
   S.mode = S.mode === 'student' ? 'pro' : 'student';
   persist();
-  const isPro = S.mode === 'pro';
-  const thumb = document.getElementById('toggle-thumb');
-  const toggle = thumb.parentElement;
-  thumb.classList.toggle('on', isPro);
-  toggle.classList.toggle('on', isPro);
-  // Re-initialize Firestore listeners for the new role so inbox/dashboard get the right data
+  // Save role to Firestore account
   const user = authGetCurrentUser();
+  if (user && typeof dbSaveUserRole === 'function') dbSaveUserRole(user.uid, S.mode);
   if (user && typeof initFirestoreListeners === 'function') {
     initFirestoreListeners(user.uid, S.mode);
   }
+  if (typeof updateRoleUI === 'function') updateRoleUI();
   updateNav(currentPage);
   goTo(currentPage);
 }
@@ -295,18 +294,14 @@ function toggleMode() {
 // ===================== EXPLORE =====================
 
 function renderExplore() {
-  const grid = document.getElementById('explore-fields');
-  grid.innerHTML = FIELDS.map(f => `
-    <div class="field-card" onclick="exploreField('${f.id}')">
-      <div class="field-emoji">${f.emoji}</div>
-      <div class="field-name">${f.name}</div>
-    </div>
-  `).join('');
-}
+  // Reset reveals so animations re-fire on revisit
+  document.querySelectorAll('#page-explore .tx-sec').forEach(function(s) { s.classList.remove('tx-in-view'); });
+  var morph = document.getElementById('tx-bg-morph');
+  if (morph) morph.className = 'tx-bg-morph';
+  var signNav = document.getElementById('tx-sign-nav');
+  if (signNav) signNav.classList.remove('visible');
 
-function exploreField(fieldId) {
-  document.getElementById('pro-field-filter').value = fieldId;
-  goTo('professionals');
+  txInitObservers();
 }
 
 // ===================== PROFESSIONALS =====================
@@ -1080,9 +1075,13 @@ function inboxAction(id, status) {
   }
 }
 
-// ===================== PRO SIGNUP =====================
+// ===================== REGISTRATION WIZARD =====================
+
+let _psRole = null;   // 'student' | 'pro'
+let _psStep = 1;      // current wizard step
 
 function renderProSignup() {
+  // Populate career field dropdown for pro step 2
   const sel = document.getElementById('pf-field');
   if (sel && sel.options.length <= 1) {
     FIELDS.forEach(f => {
@@ -1093,92 +1092,296 @@ function renderProSignup() {
     });
   }
 
-  // If pro has a profile from Firestore, try to get the rich data
+  // Populate interest chips for student step 2
+  const chipsEl = document.getElementById('ps-interests');
+  if (chipsEl && chipsEl.children.length === 0) {
+    chipsEl.innerHTML = FIELDS.map(f =>
+      `<span class="ps-chip" data-id="${f.id}" onclick="psToggleChip(this)">${f.emoji} ${f.name}</span>`
+    ).join('');
+  }
+
+  // If pro has existing profile, pre-fill for editing and skip to step 2
   const fsProfile = _firestorePros.find(p => {
     const u = authGetCurrentUser();
     return u && (p.firestoreId === u.uid);
   });
   const profile = fsProfile || S.proProfile;
 
-  if (profile && document.getElementById('pro-form-success') &&
-      !document.getElementById('pro-form-success').classList.contains('hidden')) {
-    // Already showing success state — do nothing
+  if (profile && !_psRole) {
+    _psRole = 'pro';
+    _psPrefillPro(profile);
+    psGoToStep(2);
     return;
   }
 
-  // If they have a saved profile, pre-fill the form for editing
-  if (profile) {
-    const v = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-    v('pf-name',    profile.name    || '');
-    v('pf-title',   profile.title   || '');
-    v('pf-company', profile.company || '');
-    v('pf-email',   profile.email   || '');
-    v('pf-bio',     profile.bio     || '');
-    v('pf-location', profile.location || '');
-    if (profile.field) { const s = document.getElementById('pf-field'); if (s) s.value = profile.field; }
-    if (profile.experience) { const s = document.getElementById('pf-exp'); if (s) s.value = profile.experience; }
-    if (profile.maxStudents) {
-      const s = document.getElementById('pf-max');
-      if (s) s.value = (profile.maxStudents || '').replace('/month', '').trim();
-    }
-    // Set radios
-    ['shadow-type', 'avail'].forEach(name => {
-      const valMap = { 'shadow-type': profile.shadowType || 'both', 'avail': profile.availability || 'available' };
-      const radio = document.querySelector(`input[name="${name}"][value="${valMap[name]}"]`);
-      if (radio) radio.checked = true;
-    });
-    // Update submit button text
-    const btn = document.querySelector('#pro-form-body .btn-indigo');
-    if (btn) btn.textContent = 'Update Profile';
+  // If student has existing profile, pre-fill
+  if (S.student && !_psRole) {
+    _psRole = 'student';
+    _psPrefillStudent(S.student);
+    psGoToStep(2);
+    return;
   }
 
-  document.getElementById('pro-form-body').classList.remove('hidden');
-  document.getElementById('pro-form-success').classList.add('hidden');
+  // Otherwise show step 1
+  if (!_psRole) psGoToStep(1);
 }
 
-function submitProProfile() {
+function _psPrefillPro(profile) {
+  const v = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  v('pf-name',       profile.name    || '');
+  v('pf-title',      profile.title   || '');
+  v('pf-company',    profile.company || '');
+  v('pf-email',      profile.email   || '');
+  v('pf-bio',        profile.bio     || '');
+  v('pf-location',   profile.location || '');
+  v('pf-linkedin',   profile.linkedin || '');
+  if (profile.field)       { const s = document.getElementById('pf-field'); if (s) s.value = profile.field; }
+  if (profile.experience)  { const s = document.getElementById('pf-exp');   if (s) s.value = profile.experience; }
+  if (profile.shadowType)  { const s = document.getElementById('pf-shadow-type'); if (s) s.value = profile.shadowType; }
+  if (profile.availability){ const s = document.getElementById('pf-avail'); if (s) s.value = profile.availability; }
+  if (profile.maxStudents) {
+    const s = document.getElementById('pf-max');
+    if (s) s.value = (profile.maxStudents || '').replace('/month', '').trim();
+  }
+}
+
+function _psPrefillStudent(stu) {
+  const parts = (stu.name || '').split(' ');
+  const v = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  v('ps-fname', parts[0] || '');
+  v('ps-lname', parts.slice(1).join(' ') || '');
+  v('ps-email', stu.email || '');
+  v('ps-school', stu.school || '');
+  v('ps-grade',  stu.grade || '');
+  // Pre-select interest chips
+  (stu.interests || []).forEach(id => {
+    const chip = document.querySelector(`#ps-interests .ps-chip[data-id="${id}"]`);
+    if (chip) chip.classList.add('selected');
+  });
+}
+
+/** Select role on step 1 */
+function psSelectRole(role) {
+  _psRole = role;
+  // Visual feedback
+  document.querySelectorAll('.ps-role-card').forEach(c => c.classList.remove('selected'));
+  const btn = event?.currentTarget;
+  if (btn) btn.classList.add('selected');
+  // Auto-advance after brief delay
+  setTimeout(() => psGoToStep(2), 350);
+}
+
+/** Navigate to a specific wizard step */
+function psGoToStep(step) {
+  _psStep = step;
+
+  // Hide all panels
+  document.querySelectorAll('.ps-panel').forEach(p => p.classList.add('hidden'));
+
+  // Show correct panel
+  if (step === 1) {
+    document.getElementById('ps-step-1').classList.remove('hidden');
+  } else if (step === 2) {
+    if (_psRole === 'student') {
+      document.getElementById('ps-step-2-student').classList.remove('hidden');
+    } else {
+      document.getElementById('ps-step-2-pro').classList.remove('hidden');
+    }
+  } else if (step === 3) {
+    psBuildReview();
+    document.getElementById('ps-step-3').classList.remove('hidden');
+  } else if (step === 4) {
+    document.getElementById('ps-step-done').classList.remove('hidden');
+  }
+
+  // Update stepper indicators
+  document.querySelectorAll('.ps-step-item').forEach(item => {
+    const s = parseInt(item.dataset.step);
+    item.classList.remove('active', 'done');
+    if (s === step) item.classList.add('active');
+    else if (s < step) item.classList.add('done');
+  });
+}
+
+/** Validate current step and advance */
+function psNextStep() {
+  if (_psStep === 2) {
+    if (_psRole === 'student') {
+      const fname = document.getElementById('ps-fname')?.value.trim();
+      const lname = document.getElementById('ps-lname')?.value.trim();
+      const email = document.getElementById('ps-email')?.value.trim();
+      const school = document.getElementById('ps-school')?.value.trim();
+      const grade = document.getElementById('ps-grade')?.value;
+      if (!fname || !lname) { toast('Please enter your first and last name.'); return; }
+      if (!email) { toast('Please enter your email.'); return; }
+      if (!school) { toast('Please enter your school.'); return; }
+      if (!grade) { toast('Please select your grade level.'); return; }
+    } else {
+      const name  = document.getElementById('pf-name')?.value.trim();
+      const title = document.getElementById('pf-title')?.value.trim();
+      const field = document.getElementById('pf-field')?.value;
+      const linkedin = document.getElementById('pf-linkedin')?.value.trim();
+      if (!name || !title) { toast('Please enter your name and job title.'); return; }
+      if (!field) { toast('Please select your career field.'); return; }
+      if (!linkedin) { toast('Please enter your LinkedIn profile URL.'); return; }
+    }
+    psGoToStep(3);
+  }
+}
+
+/** Build review content for step 3 */
+function psBuildReview() {
+  const container = document.getElementById('ps-review-content');
+  if (!container) return;
+
+  let rows = '';
+
+  if (_psRole === 'student') {
+    const fname = document.getElementById('ps-fname')?.value.trim() || '';
+    const lname = document.getElementById('ps-lname')?.value.trim() || '';
+    const email = document.getElementById('ps-email')?.value.trim() || '';
+    const school = document.getElementById('ps-school')?.value.trim() || '';
+    const grade = document.getElementById('ps-grade')?.value || '';
+    const interests = [...document.querySelectorAll('#ps-interests .ps-chip.selected')].map(c => c.textContent.trim());
+
+    rows = `
+      <div class="ps-review-row"><span class="ps-review-lbl">ROLE</span><span class="ps-review-val">Student</span></div>
+      <div class="ps-review-row"><span class="ps-review-lbl">NAME</span><span class="ps-review-val">${esc(fname)} ${esc(lname)}</span></div>
+      <div class="ps-review-row"><span class="ps-review-lbl">EMAIL</span><span class="ps-review-val">${esc(email)}</span></div>
+      <div class="ps-review-row"><span class="ps-review-lbl">SCHOOL</span><span class="ps-review-val">${esc(school)}</span></div>
+      <div class="ps-review-row"><span class="ps-review-lbl">GRADE</span><span class="ps-review-val">${esc(grade)}</span></div>
+      ${interests.length ? `<div class="ps-review-row"><span class="ps-review-lbl">INTERESTS</span><span class="ps-review-val">${interests.map(i => esc(i)).join(', ')}</span></div>` : ''}
+    `;
+  } else {
+    const name    = document.getElementById('pf-name')?.value.trim() || '';
+    const title   = document.getElementById('pf-title')?.value.trim() || '';
+    const company = document.getElementById('pf-company')?.value.trim() || '';
+    const email   = document.getElementById('pf-email')?.value.trim() || '';
+    const linkedin = document.getElementById('pf-linkedin')?.value.trim() || '';
+    const field   = document.getElementById('pf-field')?.value || '';
+    const exp     = document.getElementById('pf-exp')?.value || '';
+    const loc     = document.getElementById('pf-location')?.value.trim() || '';
+    const bio     = document.getElementById('pf-bio')?.value.trim() || '';
+    const shadow  = document.getElementById('pf-shadow-type')?.value || '';
+    const avail   = document.getElementById('pf-avail')?.value || '';
+    const max     = document.getElementById('pf-max')?.value || '';
+
+    rows = `
+      <div class="ps-review-row"><span class="ps-review-lbl">ROLE</span><span class="ps-review-val">Professional</span></div>
+      <div class="ps-review-row"><span class="ps-review-lbl">NAME</span><span class="ps-review-val">${esc(name)}</span></div>
+      <div class="ps-review-row"><span class="ps-review-lbl">TITLE</span><span class="ps-review-val">${esc(title)}</span></div>
+      ${company ? `<div class="ps-review-row"><span class="ps-review-lbl">COMPANY</span><span class="ps-review-val">${esc(company)}</span></div>` : ''}
+      ${email ? `<div class="ps-review-row"><span class="ps-review-lbl">EMAIL</span><span class="ps-review-val">${esc(email)}</span></div>` : ''}
+      <div class="ps-review-row"><span class="ps-review-lbl">LINKEDIN</span><span class="ps-review-val">${esc(linkedin)}</span></div>
+      <div class="ps-review-row"><span class="ps-review-lbl">FIELD</span><span class="ps-review-val">${fieldEmoji(field)} ${fieldName(field)}</span></div>
+      ${exp ? `<div class="ps-review-row"><span class="ps-review-lbl">EXPERIENCE</span><span class="ps-review-val">${esc(exp)}</span></div>` : ''}
+      ${loc ? `<div class="ps-review-row"><span class="ps-review-lbl">LOCATION</span><span class="ps-review-val">${esc(loc)}</span></div>` : ''}
+      ${bio ? `<div class="ps-review-row"><span class="ps-review-lbl">BIO</span><span class="ps-review-val">${esc(bio)}</span></div>` : ''}
+      <div class="ps-review-row"><span class="ps-review-lbl">SHADOW TYPE</span><span class="ps-review-val">${shadowLabel(shadow)}</span></div>
+      <div class="ps-review-row"><span class="ps-review-lbl">AVAILABILITY</span><span class="ps-review-val">${cap(avail)}</span></div>
+      <div class="ps-review-row"><span class="ps-review-lbl">MAX STUDENTS</span><span class="ps-review-val">${esc(max)}/month</span></div>
+    `;
+  }
+
+  container.innerHTML = rows;
+}
+
+/** Toggle interest chip selection */
+function psToggleChip(el) {
+  el.classList.toggle('selected');
+}
+
+/** Submit wizard profile */
+function psSubmit() {
+  if (_psRole === 'student') {
+    _psSubmitStudent();
+  } else {
+    _psSubmitPro();
+  }
+}
+
+function _psSubmitStudent() {
+  const fname = document.getElementById('ps-fname')?.value.trim() || '';
+  const lname = document.getElementById('ps-lname')?.value.trim() || '';
+  const email = document.getElementById('ps-email')?.value.trim() || '';
+  const school = document.getElementById('ps-school')?.value.trim() || '';
+  const grade = document.getElementById('ps-grade')?.value || '';
+  const interests = [...document.querySelectorAll('#ps-interests .ps-chip.selected')].map(c => c.dataset.id);
+
+  S.student = {
+    name: (fname + ' ' + lname).trim(),
+    email,
+    school,
+    grade,
+    location: '',
+    interests,
+  };
+  S.mode = 'student';
+  persist();
+
+  const user = authGetCurrentUser();
+  if (user && typeof dbSaveUserRole === 'function') dbSaveUserRole(user.uid, 'student');
+
+  // Update done screen
+  document.getElementById('ps-done-msg').textContent = 'YOUR STUDENT PROFILE IS LIVE. START EXPLORING CAREERS.';
+  document.getElementById('ps-done-cta').textContent = 'EXPLORE CAREERS →';
+  document.getElementById('ps-done-cta').setAttribute('onclick', "goTo('professionals')");
+
+  if (typeof updateRoleUI === 'function') updateRoleUI();
+  updateNav(currentPage);
+  toast('🎉 Welcome to ShadowPath, ' + fname + '!');
+  psGoToStep(4);
+}
+
+function _psSubmitPro() {
   const name       = document.getElementById('pf-name')?.value.trim();
   const title      = document.getElementById('pf-title')?.value.trim();
   const company    = document.getElementById('pf-company')?.value.trim() || '';
   const email      = document.getElementById('pf-email')?.value.trim() || '';
+  const linkedin   = document.getElementById('pf-linkedin')?.value.trim() || '';
   const field      = document.getElementById('pf-field')?.value;
   const bio        = document.getElementById('pf-bio')?.value.trim() || '';
   const location   = document.getElementById('pf-location')?.value.trim() || 'DFW, TX';
   const experience = document.getElementById('pf-exp')?.value || '1-3 years';
   const maxRaw     = document.getElementById('pf-max')?.value || '2';
   const maxStudents = maxRaw + '/month';
-  const shadowType  = document.querySelector('input[name="shadow-type"]:checked')?.value || 'both';
-  const availability = document.querySelector('input[name="avail"]:checked')?.value || 'available';
+  const shadowType  = document.getElementById('pf-shadow-type')?.value || 'both';
+  const availability = document.getElementById('pf-avail')?.value || 'available';
 
   if (!name || !title || !field) { toast('Please fill in your name, title, and field.'); return; }
 
-  S.proProfile = { name, title, company, email, field };
+  S.proProfile = { name, title, company, email, field, linkedin };
+  S.mode = 'pro';
   persist();
   updateNav(currentPage);
 
   const user = authGetCurrentUser();
+  if (user && typeof dbSaveUserRole === 'function') dbSaveUserRole(user.uid, 'pro');
+
   if (typeof dbSavePro === 'function' && user) {
     const proData = {
-      name, title, company, email, field, bio, location,
+      name, title, company, email, field, bio, location, linkedin,
       initials:    name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
-      gradient:    (() => { const u = authGetCurrentUser(); return (_firestorePros.find(p => u && p.firestoreId === u.uid)?.gradient) || '135deg,#4F46E5,#06B6D4'; })(),
+      gradient:    (_firestorePros.find(p => user && p.firestoreId === user.uid)?.gradient) || '135deg,#4F46E5,#06B6D4',
       availability, shadowType, experience, maxStudents,
     };
     dbSavePro(user.uid, proData).then(() => {
       toast('🎉 Your profile is now live on the Professionals page!');
-      document.getElementById('pro-form-body').classList.add('hidden');
-      document.getElementById('pro-form-success').classList.remove('hidden');
     }).catch(err => {
       console.error('dbSavePro:', err);
       toast('Profile saved! (sync error — check console)');
-      document.getElementById('pro-form-body').classList.add('hidden');
-      document.getElementById('pro-form-success').classList.remove('hidden');
     });
   } else {
-    document.getElementById('pro-form-body').classList.add('hidden');
-    document.getElementById('pro-form-success').classList.remove('hidden');
     toast('🎉 Profile saved!');
   }
+
+  // Update done screen
+  document.getElementById('ps-done-msg').textContent = 'YOUR PROFESSIONAL PROFILE IS LIVE. STUDENTS CAN FIND YOU NOW.';
+  document.getElementById('ps-done-cta').textContent = 'VIEW MY PROFILE →';
+  document.getElementById('ps-done-cta').setAttribute('onclick', "goTo('professionals')");
+
+  if (typeof updateRoleUI === 'function') updateRoleUI();
+  psGoToStep(4);
 }
 
 // ===================== HELPERS =====================
@@ -1242,13 +1445,12 @@ function toast(msg) {
 // ===================== THEME =====================
 
 function applyTheme(theme) {
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const effective = theme === 'system' ? (prefersDark ? 'dark' : 'light') : theme;
-  document.documentElement.setAttribute('data-theme', effective);
-  // Update active state in settings panel
+  // Cosmic background requires dark theme — force it always
+  document.documentElement.setAttribute('data-theme', 'dark');
+  // Update active state in settings panel (still show dark as active)
   ['light','dark','system'].forEach(t => {
     const opt = document.getElementById('theme-opt-' + t);
-    if (opt) opt.classList.toggle('active', t === theme);
+    if (opt) opt.classList.toggle('active', t === 'dark');
   });
 }
 
@@ -1283,7 +1485,194 @@ function closeSettings(e) {
   }
 }
 
+// ===================== COSMIC BACKGROUND + EXPLORE PAGE =====================
+
+let _txStarsRAF = null;
+let _txObserver = null;
+let _txHeroObs = null;
+let _txResizeHandler = null;
+let _txStarsInitialized = false;
+
+/** Cleanup explore-specific observers (stars stay running globally) */
+function txCleanupObservers() {
+  if (_txObserver) { _txObserver.disconnect(); _txObserver = null; }
+  if (_txHeroObs) { _txHeroObs.disconnect(); _txHeroObs = null; }
+  // Reset scroll position for next visit
+  var scroller = document.getElementById('tx-scroller');
+  if (scroller) scroller.scrollTop = 0;
+}
+
+/** Init global star field (called once on boot) */
+function txInitGlobalBackground() {
+  if (_txStarsInitialized) return;
+  _txStarsInitialized = true;
+  txInitStars();
+}
+
+/** Navigate to a section within the testing page */
+function txNavTo(section) {
+  var el = document.getElementById('tx-sec-' + section);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/** Set up IntersectionObservers for scroll-driven animations */
+function txInitObservers() {
+  // Clean up previous observers
+  if (_txObserver) _txObserver.disconnect();
+  if (_txHeroObs) _txHeroObs.disconnect();
+
+  var scroller = document.getElementById('tx-scroller');
+  if (!scroller) return;
+
+  // Check reduced motion preference
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // If reduced motion, reveal everything immediately and skip animations
+  if (prefersReduced) {
+    document.querySelectorAll('.tx-sec').forEach(function(s) { s.classList.add('tx-in-view'); });
+    document.getElementById('tx-sign-nav').classList.add('visible');
+    return;
+  }
+
+  var morph = document.getElementById('tx-bg-morph');
+  var signNav = document.getElementById('tx-sign-nav');
+  var trackerDots = document.querySelectorAll('.tx-track-dot');
+  var signPills = document.querySelectorAll('.tx-sign-pill');
+
+  // ── Main section observer: reveal animations + gradient morph + tracker ──
+  _txObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      var sec = entry.target;
+      var id = sec.id.replace('tx-sec-', '');
+
+      if (entry.isIntersecting) {
+        // Reveal animation
+        sec.classList.add('tx-in-view');
+
+        // Update tracker dots
+        trackerDots.forEach(function(d) { d.classList.remove('active'); });
+        var dot = document.querySelector('.tx-track-dot[data-tx="' + id + '"]');
+        if (dot) dot.classList.add('active');
+
+        // Update sign nav pills
+        signPills.forEach(function(p) { p.classList.remove('active'); });
+        var pill = document.querySelector('.tx-sign-pill[data-target="' + id + '"]');
+        if (pill) pill.classList.add('active');
+
+        // Background gradient morph
+        var accent = sec.getAttribute('data-accent');
+        if (accent && morph) {
+          morph.style.background =
+            'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(' + accent + ',.08) 0%, transparent 70%)';
+          morph.classList.add('active');
+        }
+      }
+    });
+  }, {
+    root: scroller,
+    threshold: 0.35
+  });
+
+  document.querySelectorAll('.tx-sec').forEach(function(sec) {
+    _txObserver.observe(sec);
+  });
+
+  // ── Hero observer: show/hide sign nav when hero leaves viewport ──
+  var heroEl = document.getElementById('tx-sec-hero');
+  if (heroEl && signNav) {
+    _txHeroObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          signNav.classList.remove('visible');
+        } else {
+          signNav.classList.add('visible');
+        }
+      });
+    }, {
+      root: scroller,
+      threshold: 0.1
+    });
+    _txHeroObs.observe(heroEl);
+  }
+}
+
+/** Animated star field on canvas */
+function txInitStars() {
+  var canvas = document.getElementById('tx-stars');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var stars = [];
+  var COUNT = 180;
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function createStars() {
+    stars = [];
+    for (var i = 0; i < COUNT; i++) {
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.2 + 0.2,
+        alpha: Math.random() * 0.5 + 0.15,
+        drift: (Math.random() - 0.5) * 0.12,
+        twinkleSpeed: Math.random() * 0.015 + 0.004,
+        twinklePhase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  /** Draw a single static frame (for reduced-motion or fallback) */
+  function drawStatic() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, 6.2832);
+      ctx.fillStyle = 'rgba(255,255,255,' + s.alpha + ')';
+      ctx.fill();
+    }
+  }
+
+  function draw(time) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      var a = s.alpha + Math.sin(time * s.twinkleSpeed + s.twinklePhase) * 0.18;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, 6.2832);
+      ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0.03, Math.min(0.8, a)) + ')';
+      ctx.fill();
+      s.y += s.drift;
+      if (s.y < -5) s.y = canvas.height + 5;
+      if (s.y > canvas.height + 5) s.y = -5;
+    }
+    _txStarsRAF = requestAnimationFrame(draw);
+  }
+
+  // Cleanup previous
+  if (_txStarsRAF) cancelAnimationFrame(_txStarsRAF);
+  if (_txResizeHandler) window.removeEventListener('resize', _txResizeHandler);
+
+  resize();
+  createStars();
+
+  if (reducedMotion) {
+    // Draw once, no animation loop
+    drawStatic();
+    _txResizeHandler = function() { resize(); createStars(); drawStatic(); };
+  } else {
+    _txStarsRAF = requestAnimationFrame(draw);
+    _txResizeHandler = function() { resize(); createStars(); };
+  }
+  window.addEventListener('resize', _txResizeHandler);
+}
+
 // ===================== BOOT =====================
 initTheme();
 hydrate();
+txInitGlobalBackground();
 goTo('explore');

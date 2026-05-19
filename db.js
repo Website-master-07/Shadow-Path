@@ -112,6 +112,21 @@ function dbListenMessages(requestId, callback) {
 }
 
 // ──────────────────────────────────────────────────
+//  USER ROLE  (persisted per-account in Firestore)
+// ──────────────────────────────────────────────────
+
+/** Save user role ('student' | 'pro') to their account */
+function dbSaveUserRole(uid, role) {
+  return db().collection('users').doc(uid).set({ role }, { merge: true });
+}
+
+/** Load user role — returns 'student', 'pro', or null if not set */
+function dbGetUserRole(uid) {
+  return db().collection('users').doc(uid).get()
+    .then(d => d.exists ? d.data().role || null : null);
+}
+
+// ──────────────────────────────────────────────────
 //  STUDENT PROFILES
 // ──────────────────────────────────────────────────
 

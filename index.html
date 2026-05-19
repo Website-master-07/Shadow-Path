@@ -5,12 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ShadowPath</title>
   <meta name="description" content="Bridge the gap between classroom and career by connecting students with professionals for real-world shadowing, mentorship, and curated learning roadmaps.">
-  <!-- Apply saved theme before first paint to prevent flash -->
+  <!-- Force dark theme — cosmic background requires dark UI -->
   <script>
     (function(){
-      var t=localStorage.getItem('sp_theme')||'system';
-      var dark=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);
-      document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+      document.documentElement.setAttribute('data-theme','dark');
     })();
   </script>
   <link rel="stylesheet" href="styles.css">
@@ -48,11 +46,7 @@
     </div>
 
     <div class="nav-right">
-      <div class="mode-toggle" id="mode-toggle" title="Switch role">
-        <span id="mode-label">Student</span>
-        <div class="toggle-switch" onclick="toggleMode()"><div class="toggle-thumb" id="toggle-thumb"></div></div>
-        <span>Pro</span>
-      </div>
+      <!-- Role toggle moved to Settings -->
       <!-- User menu -->
       <div class="user-menu-wrap" id="user-menu-wrap" style="position:relative;display:none">
         <div class="nav-avatar" id="nav-avatar" onclick="toggleUserMenu()"></div>
@@ -94,103 +88,13 @@
   </div>
 </nav>
 
-<!-- ========= EXPLORE ========= -->
-<div id="page-explore" class="page">
+<!-- Global cosmic background layers -->
+<canvas class="tx-stars" id="tx-stars"></canvas>
+<div class="tx-orb tx-orb-green"></div>
+<div class="tx-orb tx-orb-red"></div>
+<div class="tx-orb tx-orb-blue"></div>
 
-  <!-- Hero -->
-  <div class="hero-banner">
-    <div class="hero-glow"></div>
-    <div class="hero-content">
-      <div class="hero-badge">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-        DFW Career Exploration
-      </div>
-      <h1>Discover Your <span class="hero-accent">Career Path</span></h1>
-      <p class="hero-sub">Shadow real DFW professionals. Explore careers from the inside out.</p>
-    </div>
-
-    <!-- Interactive Landscape (desktop) -->
-    <div class="hero-landscape">
-      <svg class="hills-svg" viewBox="0 0 1440 320" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path class="hill hill-3" d="M0,200 C240,100 480,180 720,120 C960,60 1200,160 1440,100 L1440,320 L0,320 Z"/>
-        <path class="hill hill-2" d="M0,240 C180,160 420,230 660,180 C900,130 1140,220 1440,170 L1440,320 L0,320 Z"/>
-        <path class="hill hill-1" d="M0,270 C200,230 400,270 600,240 C800,210 1000,260 1200,235 C1350,220 1420,255 1440,250 L1440,320 L0,320 Z"/>
-      </svg>
-
-      <div class="signpost" style="left:14%;bottom:120px" onclick="goTo('professionals')">
-        <div class="sp-board">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-          <span>Professionals</span>
-        </div>
-        <div class="sp-pole"></div>
-      </div>
-
-      <div class="signpost" style="left:38%;bottom:155px" onclick="goTo('resources')">
-        <div class="sp-board">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          <span>Resources</span>
-        </div>
-        <div class="sp-pole"></div>
-      </div>
-
-      <div class="signpost" style="left:62%;bottom:135px" onclick="goTo('messaging')">
-        <div class="sp-board">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <span>Messages</span>
-        </div>
-        <div class="sp-pole"></div>
-      </div>
-
-      <div class="signpost" style="left:84%;bottom:165px" onclick="goTo('dashboard')">
-        <div class="sp-board">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <span>Dashboard</span>
-        </div>
-        <div class="sp-pole"></div>
-      </div>
-    </div>
-
-    <!-- Mobile sign row -->
-    <div class="hero-signs-mobile">
-      <button class="sign-pill" onclick="goTo('professionals')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        Professionals
-      </button>
-      <button class="sign-pill" onclick="goTo('resources')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        Resources
-      </button>
-      <button class="sign-pill" onclick="goTo('messaging')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Messages
-      </button>
-      <button class="sign-pill" onclick="goTo('dashboard')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        Dashboard
-      </button>
-    </div>
-  </div>
-
-  <!-- Career Fields -->
-  <div class="section">
-    <div class="section-header">
-      <h2 class="section-title">Explore by Career Field</h2>
-      <p class="section-sub">Choose a field to discover professionals and resources</p>
-    </div>
-    <div class="fields-grid" id="explore-fields"></div>
-  </div>
-
-  <!-- Pro CTA (only shown if not in pro mode) -->
-  <div class="pro-cta-strip student-only" id="pro-cta-strip">
-    <div class="pro-cta-inner">
-      <div class="pro-cta-text">
-        <h3>Are you a DFW professional?</h3>
-        <p>Mentor the next generation of DFW professionals. Share your expertise, open your workplace, and inspire students.</p>
-      </div>
-      <button class="btn btn-indigo" onclick="goTo('prosignup')">Join as a Professional →</button>
-    </div>
-  </div>
-</div>
+<!-- ========= EXPLORE (Homepage) ========= -->
 
 <!-- ========= PROFESSIONALS ========= -->
 <div id="page-professionals" class="page hidden">
@@ -434,127 +338,331 @@
   </div>
 </div>
 
-<!-- ========= PRO SIGNUP ========= -->
+<!-- ========= REGISTRATION WIZARD ========= -->
 <div id="page-prosignup" class="page hidden">
-  <div class="page-wrap">
-    <div class="pro-layout">
+  <div class="ps-wizard">
 
-      <div class="pro-info">
-        <h1>Join as a Professional</h1>
-        <p>Mentor the next generation of DFW professionals. Share your expertise, open your workplace, and inspire students.</p>
-        <div class="pro-benefit-cards">
-          <div class="pro-ben-card ben-indigo">
-            <div class="ben-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
-            </div>
-            <div><b>Impact Students</b><p>Help local DFW students discover career paths that can change their lives.</p></div>
-          </div>
-          <div class="pro-ben-card ben-cyan">
-            <div class="ben-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </div>
-            <div><b>Share Experience</b><p>Give back by sharing your professional journey and day-to-day expertise.</p></div>
-          </div>
-          <div class="pro-ben-card ben-green">
-            <div class="ben-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c.552 0 1-.448 1-1V8a1 1 0 0 0-1-1h-1V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v2H3a1 1 0 0 0-1 1v3c0 .552.448 1 1 1"/><rect x="3" y="12" width="18" height="9" rx="1"/></svg>
-            </div>
-            <div><b>You're in Control</b><p>Choose how many students, what format, and your availability at all times.</p></div>
-          </div>
-        </div>
+    <!-- Step indicator -->
+    <div class="ps-stepper">
+      <div class="ps-step-item active" data-step="1">
+        <span class="ps-step-num">01</span><span class="ps-step-name">ROLE</span>
       </div>
+      <div class="ps-step-line"></div>
+      <div class="ps-step-item" data-step="2">
+        <span class="ps-step-num">02</span><span class="ps-step-name">DETAILS</span>
+      </div>
+      <div class="ps-step-line"></div>
+      <div class="ps-step-item" data-step="3">
+        <span class="ps-step-num">03</span><span class="ps-step-name">REVIEW</span>
+      </div>
+    </div>
 
-      <div class="pro-form-card card">
-        <div id="pro-form-success" class="hidden" style="text-align:center;padding:2rem">
-          <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
-          <h2>Profile Live!</h2>
-          <p class="text-muted" style="margin-top:.5rem">Your profile is published on the Professionals page. Students in the DFW area can now find and request to shadow you.</p>
-          <div style="display:flex;gap:.75rem;justify-content:center;margin-top:1.5rem">
-            <button class="btn btn-ghost" onclick="document.getElementById('pro-form-success').classList.add('hidden');document.getElementById('pro-form-body').classList.remove('hidden')">Edit Profile</button>
-            <button class="btn btn-indigo" onclick="goTo('inbox')">Go to My Inbox</button>
-          </div>
+    <!-- Step 1: Role -->
+    <div class="ps-panel" id="ps-step-1">
+      <div class="ps-body">
+        <div class="ps-left">
+          <h1 class="ps-heading">WHO<br>ARE YOU?</h1>
+          <p class="ps-desc">CHOOSE YOUR ROLE. THIS DETERMINES YOUR SHADOWPATH EXPERIENCE.</p>
         </div>
-
-        <div id="pro-form-body">
-          <h2>Personal Information</h2>
-          <div class="form-grid-2">
-            <div class="form-grp">
-              <label class="form-lbl">Full Name *</label>
-              <input type="text" id="pf-name" class="inp" placeholder="Dr. Jane Smith" maxlength="100">
-            </div>
-            <div class="form-grp">
-              <label class="form-lbl">Job Title *</label>
-              <input type="text" id="pf-title" class="inp" placeholder="Senior Software Engineer" maxlength="100">
-            </div>
-            <div class="form-grp">
-              <label class="form-lbl">Company / Organization</label>
-              <input type="text" id="pf-company" class="inp" placeholder="AT&T, UT Southwestern, etc." maxlength="100">
-            </div>
-            <div class="form-grp">
-              <label class="form-lbl">Email</label>
-              <input type="email" id="pf-email" class="inp" placeholder="you@company.com">
-            </div>
-            <div class="form-grp">
-              <label class="form-lbl">Location (City, State)</label>
-              <input type="text" id="pf-location" class="inp" placeholder="Dallas, TX" maxlength="80">
-            </div>
-            <div class="form-grp">
-              <label class="form-lbl">Years of Experience</label>
-              <select id="pf-exp" class="inp">
-                <option value="1-3 years">1-3 years</option>
-                <option value="3-5 years">3-5 years</option>
-                <option value="5-10 years">5-10 years</option>
-                <option value="10-20 years">10-20 years</option>
-                <option value="20+ years">20+ years</option>
-              </select>
-            </div>
+        <div class="ps-right">
+          <div class="ps-role-cards">
+            <button class="ps-role-card" onclick="psSelectRole('student')">
+              <span class="ps-role-emoji">🎓</span>
+              <span class="ps-role-title">Student</span>
+              <span class="ps-role-sub">Explore careers, shadow professionals, build your future path.</span>
+              <span class="ps-role-arrow">→</span>
+            </button>
+            <button class="ps-role-card" onclick="psSelectRole('pro')">
+              <span class="ps-role-emoji">💼</span>
+              <span class="ps-role-title">Professional</span>
+              <span class="ps-role-sub">Mentor students, share your expertise, open your workplace.</span>
+              <span class="ps-role-arrow">→</span>
+            </button>
           </div>
-          <div class="form-grp" style="margin-top:.25rem">
-            <label class="form-lbl">Short Bio</label>
-            <textarea id="pf-bio" class="inp inp-ta" placeholder="Tell students about your career journey, what you do, and why you want to mentor..." maxlength="600"></textarea>
-          </div>
-
-          <div class="form-divider"></div>
-          <h2>Shadowing Preferences</h2>
-
-          <div class="form-grp">
-            <label class="form-lbl">Career Field *</label>
-            <select id="pf-field" class="inp"><option value="">Select your field...</option></select>
-          </div>
-
-          <div class="form-grp">
-            <label class="form-lbl">Shadowing Type</label>
-            <div class="radio-group">
-              <label class="radio-opt" id="rt-ip"><input type="radio" name="shadow-type" value="in-person"> <span>In-Person 🏢</span></label>
-              <label class="radio-opt" id="rt-virt"><input type="radio" name="shadow-type" value="virtual"> <span>Virtual 💻</span></label>
-              <label class="radio-opt" id="rt-both"><input type="radio" name="shadow-type" value="both"> <span>Both ✅</span></label>
-            </div>
-          </div>
-
-          <div class="form-grp">
-            <label class="form-lbl">Current Availability</label>
-            <div class="radio-group">
-              <label class="radio-opt"><input type="radio" name="avail" value="available"> <span>Available 🟢</span></label>
-              <label class="radio-opt"><input type="radio" name="avail" value="limited"> <span>Limited 🟡</span></label>
-              <label class="radio-opt"><input type="radio" name="avail" value="unavailable"> <span>Unavailable 🔴</span></label>
-            </div>
-          </div>
-
-          <div class="form-grp">
-            <label class="form-lbl">Max Students per Month</label>
-            <select id="pf-max" class="inp">
-              <option value="1">1 student</option>
-              <option value="2" selected>2 students</option>
-              <option value="3">3 students</option>
-              <option value="4-5">4-5 students</option>
-              <option value="5+">5+ students</option>
-            </select>
-          </div>
-
-          <button class="btn btn-indigo btn-full" style="margin-top:1rem" onclick="submitProProfile()">Submit Profile for Review</button>
         </div>
       </div>
     </div>
+
+    <!-- Step 2: Student -->
+    <div class="ps-panel hidden" id="ps-step-2-student">
+      <div class="ps-body">
+        <div class="ps-left">
+          <h1 class="ps-heading">TELL US<br>ABOUT YOU.</h1>
+          <p class="ps-desc">NAME, EMAIL, AND SCHOOL GET YOU STARTED. WE'LL MATCH YOU WITH DFW PROFESSIONALS.</p>
+        </div>
+        <div class="ps-right">
+          <div class="ps-card">
+            <div class="ps-row-2">
+              <div class="ps-field"><label class="ps-label">FIRST NAME (REQUIRED)</label><input type="text" id="ps-fname" class="ps-inp" placeholder="Jane" maxlength="50"></div>
+              <div class="ps-field"><label class="ps-label">LAST NAME (REQUIRED)</label><input type="text" id="ps-lname" class="ps-inp" placeholder="Smith" maxlength="50"></div>
+            </div>
+            <div class="ps-field"><label class="ps-label">EMAIL (REQUIRED)</label><input type="email" id="ps-email" class="ps-inp" placeholder="you@school.edu"></div>
+            <div class="ps-row-2">
+              <div class="ps-field"><label class="ps-label">SCHOOL / HIGH SCHOOL (REQUIRED)</label><input type="text" id="ps-school" class="ps-inp" placeholder="Plano East Senior High" maxlength="100"></div>
+              <div class="ps-field">
+                <label class="ps-label">GRADE LEVEL (REQUIRED)</label>
+                <select id="ps-grade" class="ps-inp">
+                  <option value="">Select grade...</option>
+                  <option value="9th">9th Grade</option>
+                  <option value="10th">10th Grade</option>
+                  <option value="11th">11th Grade</option>
+                  <option value="12th">12th Grade</option>
+                  <option value="college-fresh">College Freshman</option>
+                  <option value="college-soph">College Sophomore</option>
+                  <option value="college-jr">College Junior</option>
+                  <option value="college-sr">College Senior</option>
+                </select>
+              </div>
+            </div>
+            <div class="ps-field">
+              <label class="ps-label">AREAS OF CAREER INTEREST</label>
+              <p class="ps-hint">Select all that apply. Optional.</p>
+              <div class="ps-chips" id="ps-interests"></div>
+            </div>
+            <div class="ps-nav">
+              <button class="ps-btn-back" onclick="psGoToStep(1)">&#8592; BACK</button>
+              <button class="ps-btn-next" onclick="psNextStep()">CONTINUE &#8594;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Professional -->
+    <div class="ps-panel hidden" id="ps-step-2-pro">
+      <div class="ps-body">
+        <div class="ps-left">
+          <h1 class="ps-heading">YOUR<br>CAREER.</h1>
+          <p class="ps-desc">NAME, EMAIL, AND LINKEDIN GET YOU STARTED. STUDENTS WILL FIND YOU THROUGH YOUR PROFILE.</p>
+        </div>
+        <div class="ps-right">
+          <div class="ps-card">
+            <div class="ps-row-2">
+              <div class="ps-field"><label class="ps-label">FULL NAME (REQUIRED)</label><input type="text" id="pf-name" class="ps-inp" placeholder="Dr. Jane Smith" maxlength="100"></div>
+              <div class="ps-field"><label class="ps-label">JOB TITLE (REQUIRED)</label><input type="text" id="pf-title" class="ps-inp" placeholder="Senior Software Engineer" maxlength="100"></div>
+            </div>
+            <div class="ps-row-2">
+              <div class="ps-field"><label class="ps-label">COMPANY / ORGANIZATION</label><input type="text" id="pf-company" class="ps-inp" placeholder="AT&amp;T, UT Southwestern" maxlength="100"></div>
+              <div class="ps-field"><label class="ps-label">EMAIL</label><input type="email" id="pf-email" class="ps-inp" placeholder="you@company.com"></div>
+            </div>
+            <div class="ps-field"><label class="ps-label">LINKEDIN PROFILE (REQUIRED)</label><input type="url" id="pf-linkedin" class="ps-inp" placeholder="linkedin.com/in/yourname"></div>
+            <div class="ps-row-3">
+              <div class="ps-field">
+                <label class="ps-label">CAREER FIELD (REQUIRED)</label>
+                <select id="pf-field" class="ps-inp"><option value="">Select field...</option></select>
+              </div>
+              <div class="ps-field">
+                <label class="ps-label">EXPERIENCE</label>
+                <select id="pf-exp" class="ps-inp">
+                  <option value="1-3 years">1-3 yrs</option><option value="3-5 years">3-5 yrs</option>
+                  <option value="5-10 years">5-10 yrs</option><option value="10-20 years">10-20 yrs</option>
+                  <option value="20+ years">20+ yrs</option>
+                </select>
+              </div>
+              <div class="ps-field">
+                <label class="ps-label">LOCATION</label>
+                <input type="text" id="pf-location" class="ps-inp" placeholder="Dallas, TX" maxlength="80">
+              </div>
+            </div>
+            <div class="ps-field"><label class="ps-label">HOW CAN YOU HELP?</label><textarea id="pf-bio" class="ps-inp ps-ta" placeholder="Available for 1-on-1 shadowing, career Q&amp;A, resume reviews..." maxlength="600"></textarea></div>
+            <div class="ps-row-3">
+              <div class="ps-field">
+                <label class="ps-label">SHADOW TYPE</label>
+                <select id="pf-shadow-type" class="ps-inp">
+                  <option value="both">Both</option><option value="in-person">In-Person</option><option value="virtual">Virtual</option>
+                </select>
+              </div>
+              <div class="ps-field">
+                <label class="ps-label">AVAILABILITY</label>
+                <select id="pf-avail" class="ps-inp">
+                  <option value="available">Available</option><option value="limited">Limited</option><option value="unavailable">Unavailable</option>
+                </select>
+              </div>
+              <div class="ps-field">
+                <label class="ps-label">MAX STUDENTS / MO</label>
+                <select id="pf-max" class="ps-inp">
+                  <option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4-5">4-5</option><option value="5+">5+</option>
+                </select>
+              </div>
+            </div>
+            <div class="ps-nav">
+              <button class="ps-btn-back" onclick="psGoToStep(1)">&#8592; BACK</button>
+              <button class="ps-btn-next" onclick="psNextStep()">CONTINUE &#8594;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: Review -->
+    <div class="ps-panel hidden" id="ps-step-3">
+      <div class="ps-body">
+        <div class="ps-left">
+          <h1 class="ps-heading">LOOKS<br>GOOD?</h1>
+          <p class="ps-desc">REVIEW YOUR INFORMATION. YOU CAN ALWAYS UPDATE LATER.</p>
+        </div>
+        <div class="ps-right">
+          <div class="ps-card">
+            <div id="ps-review-content"></div>
+            <div class="ps-nav">
+              <button class="ps-btn-back" onclick="psGoToStep(2)">&#8592; EDIT</button>
+              <button class="ps-btn-next ps-btn-submit" onclick="psSubmit()">SUBMIT PROFILE &#8594;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Done -->
+    <div class="ps-panel hidden" id="ps-step-done">
+      <div class="ps-body ps-body-center">
+        <div class="ps-done-inner">
+          <div style="font-size:4rem;margin-bottom:1.5rem">🎉</div>
+          <h1 class="ps-heading" style="font-size:clamp(2rem,5vw,3.5rem)">YOU'RE IN.</h1>
+          <p class="ps-desc" id="ps-done-msg">YOUR PROFILE IS LIVE.</p>
+          <div class="ps-done-btns">
+            <button class="ps-btn-next" id="ps-done-cta" onclick="goTo('explore')">EXPLORE &#8594;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="page-explore" class="page">
+  <div class="tx-page" id="tx-scroller">
+
+    <!-- Explore-only gradient morph -->
+    <div class="tx-bg-morph" id="tx-bg-morph"></div>
+
+    <!-- Left section tracker -->
+    <div class="tx-tracker" id="tx-tracker">
+      <div class="tx-track-dot active" data-tx="hero" onclick="txNavTo('hero')"></div>
+      <div class="tx-track-dot" data-tx="professionals" onclick="txNavTo('professionals')"></div>
+      <div class="tx-track-dot" data-tx="resources" onclick="txNavTo('resources')"></div>
+      <div class="tx-track-dot" data-tx="messages" onclick="txNavTo('messages')"></div>
+      <div class="tx-track-dot" data-tx="dashboard" onclick="txNavTo('dashboard')"></div>
+      <div class="tx-track-dot" data-tx="closing" onclick="txNavTo('closing')"></div>
+    </div>
+
+    <!-- Floating sign nav (appears after hero) -->
+    <nav class="tx-sign-nav" id="tx-sign-nav">
+      <button class="tx-sign-pill active" data-target="professionals" onclick="txNavTo('professionals')">
+        <span class="tx-pill-dot" style="--pill-c:#39FF14"></span>Professionals
+      </button>
+      <button class="tx-sign-pill" data-target="resources" onclick="txNavTo('resources')">
+        <span class="tx-pill-dot" style="--pill-c:#FF3366"></span>Resources
+      </button>
+      <button class="tx-sign-pill" data-target="messages" onclick="txNavTo('messages')">
+        <span class="tx-pill-dot" style="--pill-c:#00D4FF"></span>Messages
+      </button>
+      <button class="tx-sign-pill" data-target="dashboard" onclick="txNavTo('dashboard')">
+        <span class="tx-pill-dot" style="--pill-c:#FFB800"></span>Dashboard
+      </button>
+    </nav>
+
+    <!-- S1: Hero -->
+    <section class="tx-snap tx-sec" id="tx-sec-hero" data-accent="0,255,30">
+      <div class="tx-sec-inner">
+        <p class="tx-eyebrow tx-reveal" style="--d:0">Career Exploration Platform</p>
+        <h1 class="tx-title tx-reveal" style="--d:1">SHADOW<br><span class="tx-title-accent">PATH</span></h1>
+        <p class="tx-subtitle tx-reveal" style="--d:2">Bridge the gap between classroom and career.<br>Shadow real professionals. Build your future.</p>
+      </div>
+      <div class="tx-scroll-hint tx-reveal" style="--d:3">
+        <span>Scroll to explore</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      </div>
+    </section>
+
+    <!-- S2: Professionals -->
+    <section class="tx-snap tx-sec tx-feature" id="tx-sec-professionals" data-accent="57,255,20">
+      <span class="tx-watermark" aria-hidden="true">01</span>
+      <div class="tx-sec-inner tx-feature-layout">
+        <div class="tx-feature-head">
+          <span class="tx-feature-num tx-reveal" style="--d:0;--ac:#39FF14">01</span>
+          <h2 class="tx-feature-title tx-reveal" style="--d:1">Browse<br><span style="color:#39FF14">Professionals</span></h2>
+          <p class="tx-feature-text tx-reveal" style="--d:2">Connect with verified DFW professionals across healthcare, tech, engineering, law, business, and creative industries. Every profile is real, every connection is meaningful.</p>
+        </div>
+        <div class="tx-feature-body">
+          <div class="tx-feat tx-reveal" style="--d:3"><span class="tx-feat-dot" style="background:#39FF14"></span>Filter by career field, location &amp; availability</div>
+          <div class="tx-feat tx-reveal" style="--d:4"><span class="tx-feat-dot" style="background:#39FF14"></span>View detailed profiles with bios and experience</div>
+          <div class="tx-feat tx-reveal" style="--d:5"><span class="tx-feat-dot" style="background:#39FF14"></span>Send shadow requests directly from any profile</div>
+          <button class="tx-feature-cta tx-reveal" style="--d:6;--ac:#39FF14" onclick="goTo('professionals')">View Professionals <span class="tx-cta-arrow">&rarr;</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- S3: Resources -->
+    <section class="tx-snap tx-sec tx-feature" id="tx-sec-resources" data-accent="255,51,102">
+      <span class="tx-watermark" aria-hidden="true">02</span>
+      <div class="tx-sec-inner tx-feature-layout">
+        <div class="tx-feature-head">
+          <span class="tx-feature-num tx-reveal" style="--d:0;--ac:#FF3366">02</span>
+          <h2 class="tx-feature-title tx-reveal" style="--d:1">Learning<br><span style="color:#FF3366">Resources</span></h2>
+          <p class="tx-feature-text tx-reveal" style="--d:2">Curated career roadmaps, interview prep guides, resume templates, and industry insights tailored to DFW students exploring their first professional steps.</p>
+        </div>
+        <div class="tx-feature-body">
+          <div class="tx-feat tx-reveal" style="--d:3"><span class="tx-feat-dot" style="background:#FF3366"></span>Career roadmaps for 20+ industries</div>
+          <div class="tx-feat tx-reveal" style="--d:4"><span class="tx-feat-dot" style="background:#FF3366"></span>Interview prep and networking guides</div>
+          <div class="tx-feat tx-reveal" style="--d:5"><span class="tx-feat-dot" style="background:#FF3366"></span>Weekly curated content from professionals</div>
+          <button class="tx-feature-cta tx-reveal" style="--d:6;--ac:#FF3366" onclick="goTo('resources')">Browse Resources <span class="tx-cta-arrow">&rarr;</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- S4: Messages -->
+    <section class="tx-snap tx-sec tx-feature" id="tx-sec-messages" data-accent="0,212,255">
+      <span class="tx-watermark" aria-hidden="true">03</span>
+      <div class="tx-sec-inner tx-feature-layout">
+        <div class="tx-feature-head">
+          <span class="tx-feature-num tx-reveal" style="--d:0;--ac:#00D4FF">03</span>
+          <h2 class="tx-feature-title tx-reveal" style="--d:1">Direct<br><span style="color:#00D4FF">Messaging</span></h2>
+          <p class="tx-feature-text tx-reveal" style="--d:2">Message professionals directly without waiting for request approvals. Ask questions, schedule shadows, and build relationships at your own pace.</p>
+        </div>
+        <div class="tx-feature-body">
+          <div class="tx-feat tx-reveal" style="--d:3"><span class="tx-feat-dot" style="background:#00D4FF"></span>Real-time messaging with read receipts</div>
+          <div class="tx-feat tx-reveal" style="--d:4"><span class="tx-feat-dot" style="background:#00D4FF"></span>Threaded conversations per professional</div>
+          <div class="tx-feat tx-reveal" style="--d:5"><span class="tx-feat-dot" style="background:#00D4FF"></span>Message any professional instantly</div>
+          <button class="tx-feature-cta tx-reveal" style="--d:6;--ac:#00D4FF" onclick="goTo('messaging')">Open Messages <span class="tx-cta-arrow">&rarr;</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- S5: Dashboard -->
+    <section class="tx-snap tx-sec tx-feature" id="tx-sec-dashboard" data-accent="255,184,0">
+      <span class="tx-watermark" aria-hidden="true">04</span>
+      <div class="tx-sec-inner tx-feature-layout">
+        <div class="tx-feature-head">
+          <span class="tx-feature-num tx-reveal" style="--d:0;--ac:#FFB800">04</span>
+          <h2 class="tx-feature-title tx-reveal" style="--d:1">Your<br><span style="color:#FFB800">Dashboard</span></h2>
+          <p class="tx-feature-text tx-reveal" style="--d:2">Track your shadow requests, manage your profile, and monitor your career exploration progress all in one place.</p>
+        </div>
+        <div class="tx-feature-body">
+          <div class="tx-feat tx-reveal" style="--d:3"><span class="tx-feat-dot" style="background:#FFB800"></span>Track pending and accepted shadow requests</div>
+          <div class="tx-feat tx-reveal" style="--d:4"><span class="tx-feat-dot" style="background:#FFB800"></span>Update your student profile and interests</div>
+          <div class="tx-feat tx-reveal" style="--d:5"><span class="tx-feat-dot" style="background:#FFB800"></span>See your exploration stats at a glance</div>
+          <button class="tx-feature-cta tx-reveal" style="--d:6;--ac:#FFB800" onclick="goTo('dashboard')">Go to Dashboard <span class="tx-cta-arrow">&rarr;</span></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- S6: Closing CTA -->
+    <section class="tx-snap tx-sec tx-closing" id="tx-sec-closing" data-accent="140,100,255">
+      <div class="tx-sec-inner" style="text-align:center">
+        <p class="tx-eyebrow tx-reveal" style="--d:0">Ready?</p>
+        <h2 class="tx-closing-title tx-reveal" style="--d:1">Start your<br><span style="color:#39FF14">journey today</span></h2>
+        <p class="tx-subtitle tx-reveal" style="--d:2;max-width:500px;margin:1.5rem auto 2.5rem">Shadow a professional. Discover a career. Build your path.</p>
+        <div class="tx-closing-btns tx-reveal" style="--d:3">
+          <button class="tx-cta-primary" onclick="goTo('professionals')">Explore Professionals</button>
+          <button class="tx-cta-secondary" onclick="goTo('dashboard')">Go to Dashboard</button>
+        </div>
+      </div>
+      <div class="tx-footer">
+        <p>ShadowPath &mdash; Built for DFW students and professionals</p>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -576,6 +684,28 @@
   <div class="modal-box modal-lg" id="profile-modal-box"></div>
 </div>
 
+<!-- ========= ROLE PICKER MODAL ========= -->
+<div class="modal-overlay" id="role-modal">
+  <div class="modal-box" style="max-width:440px;overflow:visible">
+    <div style="text-align:center;padding:2.5rem 2rem">
+      <h2 style="font-size:1.35rem;font-weight:800;margin-bottom:.5rem">Welcome to ShadowPath</h2>
+      <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:1.75rem">How will you be using the platform?</p>
+      <div class="role-pick-row">
+        <button class="role-pick-card" onclick="selectRole('student')">
+          <div class="role-pick-emoji">🎓</div>
+          <div class="role-pick-title">Student</div>
+          <div class="role-pick-desc">Discover careers &amp; shadow professionals</div>
+        </button>
+        <button class="role-pick-card" onclick="selectRole('pro')">
+          <div class="role-pick-emoji">💼</div>
+          <div class="role-pick-title">Professional</div>
+          <div class="role-pick-desc">Mentor students &amp; share your expertise</div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ========= TOAST ========= -->
 <div class="toast" id="toast"></div>
 
@@ -592,6 +722,19 @@
       </button>
     </div>
     <div class="settings-body">
+
+      <!-- Role -->
+      <div>
+        <div class="settings-section-title">Your Role</div>
+        <div class="role-toggle-row">
+          <button class="role-opt" id="role-opt-student" onclick="switchRole('student')">
+            <span class="role-opt-icon">🎓</span> Student
+          </button>
+          <button class="role-opt" id="role-opt-pro" onclick="switchRole('pro')">
+            <span class="role-opt-icon">💼</span> Professional
+          </button>
+        </div>
+      </div>
 
       <!-- Appearance -->
       <div>
@@ -639,39 +782,88 @@ let _appInitialized = false;
 
 authOnChange(function(user) {
   if (!user) {
-    // No session — send to login
     window.location.href = 'login.html';
     return;
   }
 
-  // Reveal the page now that we know the user is logged in
   document.body.style.visibility = '';
 
-  // Only run setup once (onAuthStateChanged can fire multiple times)
   if (_appInitialized) { updateAuthNav(user); return; }
   _appInitialized = true;
 
-  // Apply role from signup if set
+  // 1. Check for role from signup flow (login.html sets this)
   const signupRole = localStorage.getItem('sp_signup_role');
   if (signupRole) {
-    S.mode = signupRole === 'pro' ? 'pro' : 'student';
     localStorage.removeItem('sp_signup_role');
+    S.mode = signupRole === 'pro' ? 'pro' : 'student';
+    persist();
+    if (typeof dbSaveUserRole === 'function') dbSaveUserRole(user.uid, S.mode);
+    finishInit(user);
+    return;
   }
 
-  // Pre-fill student profile from Google account if none exists yet
+  // 2. Check Firestore for saved role
+  if (typeof dbGetUserRole === 'function') {
+    dbGetUserRole(user.uid).then(function(savedRole) {
+      if (savedRole) {
+        S.mode = savedRole;
+        persist();
+        finishInit(user);
+      } else {
+        // No role saved — show picker
+        updateAuthNav(user);
+        document.getElementById('role-modal').classList.add('open');
+      }
+    }).catch(function() { finishInit(user); });
+  } else {
+    finishInit(user);
+  }
+});
+
+function finishInit(user) {
   if (!S.student && S.mode !== 'pro') {
     S.student = { name: user.name, email: user.email, grade:'', location:'', interests:[] };
     persist();
   }
-
-  // Start Firestore real-time listeners for this user
   if (typeof initFirestoreListeners === 'function') {
     initFirestoreListeners(user.uid, S.mode);
   }
-
   updateAuthNav(user);
-  goTo('explore'); // re-render current page now that user is known
-});
+  updateRoleUI();
+  goTo('explore');
+}
+
+/** Called from the first-time role picker modal */
+function selectRole(role) {
+  S.mode = role;
+  persist();
+  var user = authGetCurrentUser();
+  if (user && typeof dbSaveUserRole === 'function') dbSaveUserRole(user.uid, role);
+  document.getElementById('role-modal').classList.remove('open');
+  finishInit(user);
+}
+
+/** Called from settings to switch role */
+function switchRole(role) {
+  if (S.mode === role) return;
+  S.mode = role;
+  persist();
+  var user = authGetCurrentUser();
+  if (user && typeof dbSaveUserRole === 'function') dbSaveUserRole(user.uid, role);
+  if (user && typeof initFirestoreListeners === 'function') {
+    initFirestoreListeners(user.uid, S.mode);
+  }
+  updateRoleUI();
+  updateNav(currentPage);
+  goTo(currentPage);
+}
+
+function updateRoleUI() {
+  var s = document.getElementById('role-opt-student');
+  var p = document.getElementById('role-opt-pro');
+  if (s) s.classList.toggle('active', S.mode === 'student');
+  if (p) p.classList.toggle('active', S.mode === 'pro');
+}
 
 function updateAuthNav(user) {
   const wrap   = document.getElementById('user-menu-wrap');
@@ -692,7 +884,7 @@ function updateAuthNav(user) {
     info.innerHTML = `
       <div style="font-weight:700;font-size:.875rem;margin-bottom:.1rem">${user.name || 'User'}</div>
       <div style="font-size:.75rem;color:var(--text-muted)">${user.email || ''}</div>
-      <span style="display:inline-block;margin-top:.35rem;font-size:.68rem;font-weight:600;padding:.15rem .5rem;border-radius:9999px;background:${user.role==='pro'?'#D1FAE5':'#EEF2FF'};color:${user.role==='pro'?'#065f46':'#4F46E5'}">${user.role==='pro'?'Professional':'Student'}</span>
+      <span style="display:inline-block;margin-top:.35rem;font-size:.68rem;font-weight:600;padding:.15rem .5rem;border-radius:9999px;background:${S.mode==='pro'?'#D1FAE5':'#EEF2FF'};color:${S.mode==='pro'?'#065f46':'#4F46E5'}">${S.mode==='pro'?'Professional':'Student'}</span>
     `;
   }
 }
